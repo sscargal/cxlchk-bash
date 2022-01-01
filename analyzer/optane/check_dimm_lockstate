@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+#set -x
+
+# Prevent repeated sourcing
+if [ -n "${__MODULE_CHECK_DIMM_LOCKSTATE__}" ]; then
+  return
+fi
+__MODULE_CHECK_DIMM_LOCKSTATE__="Loaded"
+
+# Validate DIMM Security (LockState)
+function optane_check_dimm_lockstate() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=false # Used for error reporting
+
+  # Exit the function with INFO message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    echo "${STR_INFO} ${FUNCNAME[0]} : Could not process '${FNAME}'. File not found"
+    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    return
+  fi
+
+  # Validate LockState is 'Disabled' or 'Unlocked'. All other states are errors. 
+  #     LockState
+  #         The current security state of the persistent memory on the PMem module. One ore more of:
+  #
+  #         •   Unknown - The security state cannot be determined (e.g., when the PMem module is not manageable by the
+  #             software).
+  #
+  #         •   Disabled - Security is not enabled.
+  #
+  #         •   Unlocked - Security is enabled and unlocked.
+  #
+  #         •   Locked - Security is enabled and locked.
+  #
+  #         •   Frozen - A reboot is required to change the security state.
+  #
+  #         •   Exceeded - The passphrase limit has been reached. A power cycle is required to change the security state.
+  #
+  #         •   MP Exceeded - The master passphrase limit has been reached. A power cycle is required to change the security
+  #             state.
+  #
+  #         •   Not Supported - Security is not supported on the PMem module.
+
+  # Create Associative Arrays
+  declare -A DIMM_LOCKSTATE_COUNT    # Key is the LockState; Value is a list of DIMMs with this LockState
+
+  # Get the DimmID and LockState fields from the input file
+  while IFS='|' read -r DimmID Capacity LockState HealthState FWVersion
+  do
+    DimmID="$(echo ${DimmID})"          # Remove leading and trailing whitespaces
+    LockState="$(echo ${LockState})"      # Remove leading and trailing whitespaces
+    if [ ${OPT_VERBOSITY} -ge 3 ]; then
+      debug_msg "DIMM Capacity: ${DimmID}=${LockState}"
+    fi
+    # Report non-Disabled or non-Unlocked dimms
+    if [[ "${LockState}" != "Disabled" ]] && [[ "${LockState}" != "Unlocked" ]]; then
+      ERR_STATE=true
+    fi
+    # Add the DIMM to the Capacity array
+    DIMM_LOCKSTATE_COUNT[${LockState}]+="${DimmID},"
+  done <<<  "$(tail -n +3 ${FNAME})" # Skip the header lines (1&2), and start reading from line 3
+
+  # Report non-Disabled or non-Unlocked dimms
+  # if [[ ${#DIMM_LOCKSTATE_COUNT[@]} -gt 1 ]] || [[ "${ERR_STATE}" = true ]]; then
+  if [ "${ERR_STATE}" = true ]; then
+    info_msg "Multiple (${#DIMM_LOCKSTATE_COUNT[@]}) PMem LockStates found!"
+    for d in "${!DIMM_LOCKSTATE_COUNT[@]}" ; do # Display the full list of DimmIDs and Capacities found
+      DIMM_LIST=${DIMM_LOCKSTATE_COUNT[${d}]::-1} # Strip the last character ',' from the string
+      info_msg "${d} = ${DIMM_LIST}"
+    done
+  fi
+
+  # Return the final PASS/FAIL to the user
+  if [ "${ERR_STATE}" = true ] ; then
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules reported an unexpected LockState status. See previous errors."
+    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+  else
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem Module Security LockState is good"
+    REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+  fi
+}
+
+# Call the main function
+optane_check_dimm_lockstate "${OUTPUT_PATH}/ipmctl_show_-dimm"

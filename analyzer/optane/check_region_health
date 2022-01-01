@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+#set -x
+
+# Prevent repeated sourcing
+if [ -n "${__MODULE_CHECK_REGION_HEALTH__}" ]; then
+  return
+fi
+__MODULE_CHECK_REGION_HEALTH__="Loaded"
+
+# Validate Region Health 
+function optane_check_region_health() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=false # Used for error reporting
+
+  # Exit the function with INFO message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    info_msg " Could not process '${FNAME}'. File not found"
+    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    return
+  fi
+
+  # Create Associative Arrays
+  declare -A REGION_HEALTH    # Key is the HealthState; Value is a list of Regions with this Healthstate
+
+  # Get the SocketID and HealthState fields from the input file
+  while IFS='|' read -r SocketID ISetID PersistentMemoryType Capacity FreeCapacity HealthState
+  do
+    SocketID="$(echo ${SocketID})"            # Remove leading and trailing whitespaces
+    HealthState="$(echo ${HealthState})"      # Remove leading and trailing whitespaces
+    if [ ${OPT_VERBOSITY} -ge 3 ]; then
+      debug_msg "Socket HealthState: ${SocketID}=${HealthState}"
+    fi
+    # Report non-Healthy Regions
+    if [[ "${HealthState}" != "Healthy" ]]; then
+      ERR_STATE=true
+    fi
+    # Add the Region HealthState to the array 
+    REGION_HEALTH[${HealthState}]+="${SocketID},"
+  done <<<  "$(tail -n +3 ${FNAME})" # Skip the header lines (1&2), and start reading from line 3
+
+  # Report non-Healthy Regions
+  if [ "${ERR_STATE}" = true ]; then
+    info_msg "Multiple (${#REGION_HEALTH[@]}) Region Health states found!"
+    for d in "${!REGION_HEALTH[@]}" ; do # Display the full list of Regions found
+      REGION_LIST=${REGION_HEALTH[${d}]::-1} # Strip the last character ',' from the string
+      info_msg "${d} = ${REGION_LIST}"
+    done
+  fi
+
+  # Return the final PASS/FAIL to the user
+  if [ "${ERR_STATE}" = true ] ; then
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more regions reported a non-Healthy status. See previous errors."
+    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+  else
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All Regions are Healthy"
+    REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+  fi
+}
+
+# Call the main function
+optane_check_region_health "${OUTPUT_PATH}/ipmctl_show_-region"

@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# set -x
+
+# Prevent repeated sourcing
+if [ -n "${__MODULE_CHECK_DIMM_POPULATION__}" ]; then
+  return
+fi
+__MODULE_CHECK_DIMM_POPULATION__="Loaded"
+
+# Validate DIMM population
+function optane_check_dimm_population() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=false # Used for error reporting
+
+  # Exit the function with INFO message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    echo "${STR_INFO} ${FUNCNAME[0]} : Could not process '${FNAME}'. File not found"
+    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    return
+  fi
+
+  # DimmID is formatted as 0xABCD, where A, B, C, and D are defined as follows:
+  #  A = Socket
+  #  B = Memory Controller
+  #  C = Channel
+  #  D = Slot
+
+  # Create an array of DIMM_IDs
+  DIMM_IDS=($(${AWK} '$1 ~ /^0x/ {print $1}' ${FNAME}))
+
+  # Verify we have data
+  if [ -z ${DIMM_IDS} ]; then
+    echo "${STR_FAIL} ${FUNCNAME[0]} : Could not get a list of PMem Devices."
+    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+    err_state=true
+    return
+  fi 
+  
+  # Verify we have the correct number of DIMMs installed (1 or divisible by two)
+  NUM_OF_DIMMIDS=${#DIMM_IDS[@]}
+  if ! [[ ${NUM_OF_DIMMIDS} -eq 1 || i$(( ${NUM_OF_DIMMIDS} % 2 )) -eq 0 ]] ; then
+    echo "${STR_FAIL} ${FUNCNAME[0]} : Detected an odd number of PMem devices. Expected 1 or an even number."
+    err_state=true
+  fi
+
+  # TODO: Perform more thorough population checks to ensure they meet the requirements
+
+  # Return the final PASS/FAIL to the user
+  if [ "${ERR_STATE}" = true ] ; then
+    echo "${STR_FAIL} ${FUNCNAME[0]} : Detected an invalid PMem population. Counted ${NUM_OF_DIMMIDS} PMem modules. See previous errors."
+    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+  else
+    echo "${STR_PASSED} ${FUNCNAME[0]} : Detected ${NUM_OF_DIMMIDS} PMem modules. Population looks good."
+    REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+  fi
+}
+
+# Call the main function
+optane_check_dimm_population "${OUTPUT_PATH}/ipmctl_show_-dimm"

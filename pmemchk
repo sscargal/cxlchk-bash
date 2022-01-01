@@ -1,0 +1,333 @@
+#!/usr/bin/env bash
+
+# set -e: exits if a command fails
+# set -u: errors if an variable is referenced before being set
+set -e
+
+#################################################################################################
+# Global Variables 
+#################################################################################################
+
+VERSION="0.1.0"					# version string
+
+#SCRIPT_NAME=$(basename "$0")			# Name of this script
+SCRIPT_NAME=${0##*/}				# Name of this script
+
+NDCTL=($(command -v ndctl))                     # Path to ndctl, use -n option to specify location of the ndctl binary 
+IPMCTL=($(command -v ipmctl))                   # Path to ipmctl, use -i option to specify the location of the ipmctl binary 
+CXLCLI=($(command -v cxl))			# Path to cxl, use -c option to specify the location of the cxl binary
+BC=($(command -v bc))				# Path to bc
+NUMACTL=($(command -v numactl))			# Path to numactl
+LSCPU=($(command -v lscpu))                     # Path to lscpu
+AWK=($(command -v awk))                         # Path to awk
+GREP=($(command -v grep))			# Path to grep
+EGREP=($(command -v egrep))			# Path to egrep
+SED=($(command -v sed))				# Path to sed
+TPUT=($(command -v tput))			# Path to tput
+CP=($(command -v cp))				# Path to cp
+FIND=($(command -v find))                       # Path to find
+
+OUTPUT_PATH="./pmemchk.`hostname`.`date +"%m%d-%H%M"`" # output directory created by this script
+TERMCOLORS=0					# Use terminal colors or not (default: FALSE)
+
+# Variables for script input options and arguments
+OPT_VERBOSITY=0					# default, -v, -vv, -vvv option to increase verbose output
+OPT_A=false					# Determine if -A was passed
+
+#################################################################################################
+# Helper Functions
+#################################################################################################
+
+# Handle Ctrl-C User Input
+trap ctrl_c INT
+function ctrl_c() {
+  echo "INFO: Received CTRL+C - aborting"
+  display_test_end_info
+  popd &> /dev/null
+  exit 1
+}
+
+# Display test start information
+function display_test_start_info() {
+  START_TIME=$(date +%s)
+  echo "======================================================================="
+  echo "Starting PMem Checker"
+  echo "${0##*/} Version ${VERSION}"
+  echo "Started: $(date --date @${START_TIME})"
+  echo "======================================================================="
+}
+
+# Display test end information
+function display_test_end_info() {
+  END_TIME=$(date +%s)
+  TEST_DURATION=$((${END_TIME}-${START_TIME}))
+  echo "======================================================================="
+  echo "PMem Checker Complete"
+  echo "Ended: $(date --date @${END_TIME})"
+  echo "Duration: ${TEST_DURATION} seconds"
+  echo "Results: $OUTPUT_PATH"
+  echo "======================================================================="
+}
+
+# Verify this script is being executed on supported OS and Architectures
+function verify_os(){
+  if [[ $(uname) != "Linux" ]]; then
+    echo "[Error] This script is supported on Linux only. You have $(uname). Exiting."
+    display_test_end_info
+    popd &> /dev/null
+    exit 1
+  fi
+
+  if [[ $(uname -m) != "x86_64" ]]; then
+    echo "[Error] This script is supported on x86_64 only. You have $(uname -m). Exiting."
+    display_test_end_info
+    popd &> /dev/null
+    exit 1
+  fi
+}
+
+# Verify the required commands and utilities exist on the system
+# We use either the defaults or user specified paths
+function verify_cmds() {
+  err_state=false
+
+  if [ ! -x "${NDCTL}" ]; then
+    echo "ERROR: ndctl command not found! Use -n to specify the location."
+    err_state=true 
+  else 
+    echo "Using NDCTL command: ${NDCTL}"
+    echo "NDCTL version: $(${NDCTL} version)"
+  fi
+
+  if [ ! -x "${IPMCTL}" ]; then
+    echo "ERROR: ipmctl command not found! Use -i to specify the location."
+    err_state=true 
+  else 
+    echo "Using IPMCTL command: ${IPMCTL}"
+    TOKENS=( $(${IPMCTL} version 2>&1 ) )
+    IPMCTL_VER=${TOKENS[-1]}
+    echo "IPMCTL version: ${IPMCTL_VER}"
+  fi
+
+  # cxl is optional and only available in NDCTL version 72 or later
+  if [ ! -x "${CXLCLI}" ]; then
+    echo "ERROR: cxl command not found! Use -c to specify the location."
+    err_state=false 
+  else
+    echo "Using CXL command: ${CXLCLI}"
+    echo "CXL version: $(${CXLCLI} version)"
+  fi
+
+  for CMD in awk sed numactl lscpu grep egrep mount wc mountpoint cut bc cp find; do
+   CMD_PATH=($(command -v ${CMD}))
+   if [ ! -x "${CMD_PATH}" ]; then
+     echo "ERROR: ${CMD} command not found! Please install the ${CMD} package."
+     err_state=true
+   fi
+  done
+
+  if ${err_state}; then
+    echo "Exiting due to previous error(s)"
+    echo "Please resolve missing binaries and re-run this script."
+    exit 1
+  fi
+}
+
+# Display some basic system information
+function sysinfo() {
+  # Get the OS distribution and version if possible
+  if [ -f "/etc/os-release" ]; then
+    OS_PRETTY_NAME=$(${GREP} PRETTY_NAME /etc/os-release | cut -f2 -d'"')
+    echo "Operating System: ${OS_PRETTY_NAME}"
+  fi
+
+  # Kernel version
+  echo "Kernel Version :" `uname -r`
+
+  # CPU Info
+  ${LSCPU} | egrep "^CPU\(s\):|^Model name:|^Socket\(s)\:|^NUMA node"
+}
+
+# Display the help information
+function display_usage() {
+  echo " "
+  echo "Usage: $0 [optional args]"
+  echo " "
+  echo "Checks for known issues with persistent memory configurations." 
+  echo "Run with root privilege." 
+  echo " "
+  echo "Optional args:"
+  echo "   -A <Path to dataset>"
+  echo "      Specify the path to a dataset. Skips running the analyzer."
+  echo " "
+  echo "   -h,-?" 
+  echo "      Display this help"
+  echo " "
+  echo "   -i <Path to IPMCTL executable>"
+  echo "      Specify the path to the IPMCTL executable"
+  echo " "
+  echo "   -c <Path to CXL executable>"
+  echo "      Specify the path to the CXL executable"
+  echo " "
+  echo "   -n <Path to NDCTL executable>"
+  echo "      Specify the path to the NDCTL executable"
+  echo " " 
+  echo "   -v"
+  echo "      Print verbose output. Use -v, -vv, and -vvv to increase verbosity."
+  exit 0
+}
+
+# Process command arguments and options
+function process_args() {
+
+  # Process the command arguments and options
+  while getopts "h?A:i:n:v" opt; do
+    case "$opt" in
+    A) # Skip running the data collector and analyze a collected dataset (path specified by user)
+      OPT_A=true
+      OUTPUT_PATH=$OPTARG
+      ;;
+    h|\?)
+      display_usage $0
+      ;;
+    i) # Set the location of the ipmctl binary
+      IPMCTL=$OPTARG
+      ;;
+    n) # Set the location of the ndctl binary
+      NDCTL=$OPTARG
+      ;;
+    v) # Each -v should increase OPT_VERBOSITY level
+      OPT_VERBOSITY=$(($OPT_VERBOSITY+1))
+      # Source the debug_msg() function
+      . common/debug
+      ;;
+    *) # Invalid argument
+      display_usage $0
+      exit 1
+      ;;
+    esac
+  done
+
+  # Verify the script is executed with root privileges
+  if [[ $EUID -ne 0 ]]; then
+    echo "Please run this script with root privilege or use -h to display help information."
+    exit 1
+  fi
+
+  # Sanity check verbosity levels
+  if [ ${OPT_VERBOSITY} -gt 3 ]; then
+    OPT_VERBOSITY=3
+  fi
+}
+
+# Create output directory
+function init_outputs() {
+   rm -rf $OUTPUT_PATH 2> /dev/null
+   mkdir $OUTPUT_PATH
+}
+
+# Define string definitions based on whether colors are or are not supported by the terminal
+function setup_strings() {
+  if [ TERMCOLORS ]; then
+    STR_PASSED="${green}[ PASSED  ]${normal}"
+    STR_WARN="${yellow}[ WARNING ]${normal}"
+    STR_FAIL="${red}[ FAILED  ]${normal}"
+    STR_INFO="${magenta}[ INFO    ]${normal}"
+    STR_DEBUG="${cyan}[ DEBUG   ]${normal}"
+  else
+    STR_PASSED="[ PASSED  ]"
+    STR_WARN="[ WARNING ]"
+    STR_FAIL="[ FAILED  ]"
+    STR_INFO="[ INFO    ]"
+    STR_DEBUG="[ DEBUG   ]"
+  fi
+}
+
+# Auto detect whether the users terminal supports colors
+# Sets TERMCOLORS to TRUE or FALSE
+function auto_detect_terminal_colors() {
+  # Verify STDOUT is a terminal
+  if [ -t 1 ]; then
+    # If the terminal supports colors, use them.
+    # Use the tput command if available. If not, fall back and manually assign colors.
+    if [ -z "${TPUT}" ]; then
+      # tput is not available. Manually assign colors
+      bold="\e[1m"
+      underline="\e[4"
+      normal="\e[0m"
+      black="\e[39m"
+      red="\e[31m"
+      green="\e[32m"
+      yellow="\e[33m"
+      blue="\e[34m"
+      magenta="\e[35m"
+      cyan="\e[36m"
+      white="\e[97m"
+      default_fg="\e[39m"
+      default_bg="\e[49m"
+    else 
+      # Use tput
+      if [[ $(${TPUT} colors) -ge 8 ]]; then
+        # Enable terminal colors
+        TERMCOLORS=1
+        # Define the color scheme using tput
+        bold="$(${TPUT} bold)"
+        underline="$(${TPUT} smul)"
+        standout="$(${TPUT} smso)"
+        normal="$(${TPUT} sgr0)" #reset foreground to default
+        black="$(${TPUT} setaf 0)"
+        red="$(${TPUT} setaf 1)"
+        green="$(${TPUT} setaf 2)"
+        yellow="$(${TPUT} setaf 3)"
+        blue="$(${TPUT} setaf 4)"
+        magenta="$(${TPUT} setaf 5)"
+        cyan="$(${TPUT} setaf 6)"
+        white="$(${TPUT} setaf 7)"
+      fi
+    fi 
+  fi 
+  # This isn't a terminal. Disable colors.
+  TERMCOLORS=0
+
+  # Call setup_strings to use color or no color
+  setup_strings
+}
+
+#################################################################################################
+# Main
+#################################################################################################
+
+# Add the current working directory to $PATH
+pushd $PWD &> /dev/null
+
+# Display the header information
+display_test_start_info
+
+# Call internal functions to initialize and verify the environment
+process_args $@
+verify_cmds
+verify_os
+sysinfo
+auto_detect_terminal_colors
+
+# Source common functions
+. common/common
+
+# If not processing a previously collected dataset, run the data collector on the local machine 
+if [ "${OPT_A}" = false ] ; then 
+  init_outputs 		# Initialize the data collection directory
+  . collector/collector # Run the collector module
+fi
+
+# Run the analysis modules on the collected data 
+. analyzer/analyzer
+
+# Zip the output directory
+# TODO
+
+# Display the end header information
+display_test_end_info
+
+# Remove the current directory from $PATH 
+popd &> /dev/null
+exit 0

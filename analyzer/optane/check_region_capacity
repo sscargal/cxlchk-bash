@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+#set -x
+
+# Prevent repeated sourcing
+if [ -n "${__MODULE_CHECK_REGION_CAPACITY__}" ]; then
+  return
+fi
+__MODULE_CHECK_REGION_CAPACITY__="Loaded"
+
+# Validate all regions have the same capacity 
+function optane_check_region_capacity() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=false # Used for error reporting
+
+  # Exit the function with INFO message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    info_msg " Could not process '${FNAME}'. File not found"
+    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    return
+  fi
+
+  # Create Associative Arrays
+  declare -A REGION_CAPACITY    # Key is the Capacity; Value is a list of Regions with this Capacity
+
+  # Get the SocketID and Capacity fields from the input file
+  while IFS='|' read -r SocketID ISetID PersistentMemoryType Capacity FreeCapacity HealthState
+  do
+    SocketID="$(echo ${SocketID})"      # Remove leading and trailing whitespaces
+    Capacity="$(echo ${Capacity})"      # Remove leading and trailing whitespaces
+    if [ ${OPT_VERBOSITY} -ge 3 ]; then
+      debug_msg "Socket Capacity: ${SocketID}=${Capacity}"
+    fi
+    # Add the Region Capacity to the array 
+    REGION_CAPACITY[${Capacity}]+="${SocketID},"
+  done <<<  "$(tail -n +3 ${FNAME})" # Skip the header lines (1&2), and start reading from line 3
+
+  # Report Regions with different capacities
+  if [[ ${#REGION_CAPACITY[@]} -gt 1 ]]; then
+    info_msg "Multiple (${#REGION_CAPACITY[@]}) Region have different capacities!"
+    for r in "${!REGION_CAPACITY[@]}" ; do # Display the full list of Regions found
+      REGION_LIST=${REGION_CAPACITY[${r}]::-1} # Strip the last character ',' from the string
+      info_msg "${r} = ${REGION_LIST}"
+    done
+  fi
+
+  # Return the final PASS/FAIL to the user
+  if [ "${ERR_STATE}" = true ] ; then
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more regions have different capacities. See previous errors."
+    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+  else
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All Regions have the same Capacity"
+    REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+  fi
+}
+
+# Call the main function
+optane_check_region_capacity "${OUTPUT_PATH}/ipmctl_show_-region"

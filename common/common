@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#set -x
+
+# Define the message type printing formats
+
+_INFO_HDR_FMT="%s %s "
+_INFO_MSG_FMT="${_INFO_HDR_FMT} : %s\n"
+
+# Print INFO messages with the function name and optional string message
+function info_msg() {
+  #printf "$_INFO_MSG_FMT" ${STR_INFO} ${FUNCNAME[1]} "${@}"
+  echo "${STR_INFO} ${FUNCNAME[1]} : ${@}"
+}

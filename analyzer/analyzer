@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+function execute_rules() {
+  # Source all test/modules and exclude this main script
+  for test in $(find ./analyzer/ -type f | egrep -v "analyzer/analyzer") ; do 
+    . ${test} # Run each test found
+  done
+}
+
+#################################################################################################
+# Helper Functions
+#################################################################################################
+
+function display_analyzer_header() {
+  echo "======================================================================="
+  echo "Starting analysis of the data"
+  echo "======================================================================="
+}
+
+function display_analyzer_end() {
+  echo "======================================================================="
+  echo "Data analysis completed"
+  echo "======================================================================="
+}
+
+function initialize_report(){
+  # Initialize report counters
+  REPORT_COUNT_PASSED=0
+  REPORT_COUNT_FAILED=0
+  REPORT_COUNT_INFO=0
+  REPORT_COUNT_WARNINGS=0
+}
+
+function print_report_summary() {
+  echo "======================================================================="
+  echo "Analysis Report Summary"
+  echo "======================================================================="
+  echo "${STR_PASSED} = ${REPORT_COUNT_PASSED}"
+  echo "${STR_FAIL} = ${REPORT_COUNT_FAILED}"
+  echo "${STR_INFO} = ${REPORT_COUNT_INFO}"
+  echo "${STR_WARN} = ${REPORT_COUNT_WARNINGS}"
+}
+
+#################################################################################################
+# Main
+#################################################################################################
+
+# Execute each rule
+display_analyzer_header
+initialize_report
+execute_rules
+display_analyzer_end
+print_report_summary
