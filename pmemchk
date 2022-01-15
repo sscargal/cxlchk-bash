@@ -158,7 +158,7 @@ function display_usage() {
   echo " "
   echo "Optional args:"
   echo "   -A <Path to dataset>"
-  echo "      Specify the path to a dataset. Skips running the analyzer."
+  echo "      Specify the path to a dataset. Skips running the collector."
   echo " "
   echo "   -h,-?" 
   echo "      Display this help"
