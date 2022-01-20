@@ -2,19 +2,12 @@
 
 # Description 
 `pmemchk` can be used to confirm a system with persistent memory is healthy and the configuration looks sane. pmemchk has two main modules:
-- Collector - runs ipmctl, ndctl, and cxl commands. Also collects minimal OS information and the /var/log/messages file.
-- Analyzer - Runs several tests against the collected data and reports whether the test 'Passes' or 'Failed'. If a test fails, there should be some information to explain why.
+- Collector - Collects configuration and health data from the host 
+- Analyzer - Runs tests against the collected data and reports whether the test Passes or Fails. If a test fails, there should be some information to explain why.
 
 # Help
 
 ```
-# ./pmemchk -h
-=======================================================================
-Starting PMem Checker
-pmemchk Version 0.1.0
-Started: Fri Jan 14 05:34:12 PM MST 2022
-=======================================================================
-
 Usage: ./pmemchk [optional args]
 
 Checks for known issues with persistent memory configurations.
@@ -23,6 +16,9 @@ Run with root privilege.
 Optional args:
    -A <Path to dataset>
       Specify the path to a dataset. Skips running the collector.
+
+   -C
+      Run the collector only. Skips running the analyzer.
 
    -h,-?
       Display this help
@@ -43,13 +39,16 @@ Optional args:
 # Examples
 
 Execute `pmemchk` which runs the Collector and Analyzer
-
 ```
 $ sudo ./pmemchk
 ```
 
-Execute `pmemchk` analysis only against a previously collected dataset
+Only collect data from the host. Does not run the analyzer
+```
+$ sudo ./pmemchk -C
+```
 
+Runs the analyzer against a previously collected dataset
 ```
 $ sudo ./pmemchk -A ./pmemchk.hostname.0113-1210
 ```
