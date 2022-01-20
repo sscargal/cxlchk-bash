@@ -10,22 +10,21 @@ set -e
 
 VERSION="0.1.0"					# version string
 
-#SCRIPT_NAME=$(basename "$0")			# Name of this script
 SCRIPT_NAME=${0##*/}				# Name of this script
 
-NDCTL=($(command -v ndctl))                     # Path to ndctl, use -n option to specify location of the ndctl binary 
-IPMCTL=($(command -v ipmctl))                   # Path to ipmctl, use -i option to specify the location of the ipmctl binary 
-CXLCLI=($(command -v cxl))			# Path to cxl, use -c option to specify the location of the cxl binary
-BC=($(command -v bc))				# Path to bc
-NUMACTL=($(command -v numactl))			# Path to numactl
-LSCPU=($(command -v lscpu))                     # Path to lscpu
-AWK=($(command -v awk))                         # Path to awk
-GREP=($(command -v grep))			# Path to grep
-EGREP=($(command -v egrep))			# Path to egrep
-SED=($(command -v sed))				# Path to sed
-TPUT=($(command -v tput))			# Path to tput
-CP=($(command -v cp))				# Path to cp
-FIND=($(command -v find))                       # Path to find
+NDCTL=("$(command -v ndctl)")                   # Path to ndctl, use -n option to specify location of the ndctl binary 
+IPMCTL=("$(command -v ipmctl)")                 # Path to ipmctl, use -i option to specify the location of the ipmctl binary 
+CXLCLI=("$(command -v cxl)")			# Path to cxl, use -c option to specify the location of the cxl binary
+BC=("$(command -v bc)")				# Path to bc
+NUMACTL=("$(command -v numactl)")		# Path to numactl
+LSCPU=("$(command -v lscpu)")                   # Path to lscpu
+AWK=("$(command -v awk)")                       # Path to awk
+GREP=("$(command -v grep)")			# Path to grep
+EGREP=("$(command -v egrep)")			# Path to egrep
+SED=("$(command -v sed)")			# Path to sed
+TPUT=("$(command -v tput)")			# Path to tput
+CP=("$(command -v cp)")				# Path to cp
+FIND=("$(command -v find)")                     # Path to find
 
 OUTPUT_PATH="./pmemchk.`hostname`.`date +"%m%d-%H%M"`" # output directory created by this script
 TERMCOLORS=false				# Use terminal colors or not (default: FALSE)
@@ -53,7 +52,7 @@ function display_test_start_info() {
   START_TIME=$(date +%s)
   echo "======================================================================="
   echo "Starting PMem Checker"
-  echo "${0##*/} Version ${VERSION}"
+  echo "${SCRIPT_NAME} Version ${VERSION}"
   echo "Started: $(date --date @${START_TIME})"
   echo "======================================================================="
 }
