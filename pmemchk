@@ -32,7 +32,8 @@ TERMCOLORS=0					# Use terminal colors or not (default: FALSE)
 
 # Variables for script input options and arguments
 OPT_VERBOSITY=0					# default, -v, -vv, -vvv option to increase verbose output
-OPT_A=false					# Determine if -A was passed
+OPT_A=false					# Determine if -A arg was passed in
+OPT_C=false					# Determine if -C arg was passed in
 
 #################################################################################################
 # Helper Functions
@@ -160,6 +161,9 @@ function display_usage() {
   echo "   -A <Path to dataset>"
   echo "      Specify the path to a dataset. Skips running the collector."
   echo " "
+  echo "   -C" 
+  echo "      Run the collector only. Skips running the analyzer."
+  echo " "
   echo "   -h,-?" 
   echo "      Display this help"
   echo " "
@@ -181,11 +185,14 @@ function display_usage() {
 function process_args() {
 
   # Process the command arguments and options
-  while getopts "h?A:i:n:v" opt; do
+  while getopts "h?A:Ci:n:v" opt; do
     case "$opt" in
     A) # Skip running the data collector and analyze a collected dataset (path specified by user)
       OPT_A=true
       OUTPUT_PATH=$OPTARG
+      ;;
+    C) # Run the collector only. Do not run the analyzer 
+      OPT_C=true
       ;;
     h|\?)
       display_usage $0
@@ -208,9 +215,11 @@ function process_args() {
     esac
   done
 
-  # Verify the script is executed with root privileges
-  if [[ $EUID -ne 0 ]]; then
-    echo "Please run this script with root privilege or use -h to display help information."
+  # Sanity Check command arguments
+  # -A and -C are mutually exclusive
+  if [[ "${OPT_A}" = true ]] && [[ "${OPT_C}" = true ]]; then
+    echo "Cannot use '-A' and '-C' together."
+    display_usage $0
     exit 1
   fi
 
@@ -297,6 +306,12 @@ function auto_detect_terminal_colors() {
 # Main
 #################################################################################################
 
+# Verify the script is executed with root privileges
+if [[ $EUID -ne 0 ]]; then
+  echo "Please run this script with root privilege or use -h to display help information."
+  exit 1
+fi
+
 # Add the current working directory to $PATH
 pushd $PWD &> /dev/null
 
@@ -314,13 +329,15 @@ auto_detect_terminal_colors
 . common/common
 
 # If not processing a previously collected dataset, run the data collector on the local machine 
-if [ "${OPT_A}" = false ] ; then 
+if [[ "${OPT_A}" = false ]] ; then 
   init_outputs 		# Initialize the data collection directory
   . collector/collector # Run the collector module
 fi
 
 # Run the analysis modules on the collected data 
-. analyzer/analyzer
+if [[ "${OPT_C}" = false ]] ; then 
+  . analyzer/analyzer
+fi
 
 # Zip the output directory
 # TODO
