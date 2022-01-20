@@ -28,7 +28,7 @@ CP=($(command -v cp))				# Path to cp
 FIND=($(command -v find))                       # Path to find
 
 OUTPUT_PATH="./pmemchk.`hostname`.`date +"%m%d-%H%M"`" # output directory created by this script
-TERMCOLORS=0					# Use terminal colors or not (default: FALSE)
+TERMCOLORS=false				# Use terminal colors or not (default: FALSE)
 
 # Variables for script input options and arguments
 OPT_VERBOSITY=0					# default, -v, -vv, -vvv option to increase verbose output
@@ -237,7 +237,7 @@ function init_outputs() {
 
 # Define string definitions based on whether colors are or are not supported by the terminal
 function setup_strings() {
-  if [ TERMCOLORS ]; then
+  if [[ "${TERMCOLORS}" = true ]]; then
     STR_PASSED="${green}[ PASSED  ]${normal}"
     STR_WARN="${yellow}[ WARNING ]${normal}"
     STR_FAIL="${red}[ FAILED  ]${normal}"
@@ -278,7 +278,7 @@ function auto_detect_terminal_colors() {
       # Use tput
       if [[ $(${TPUT} colors) -ge 8 ]]; then
         # Enable terminal colors
-        TERMCOLORS=1
+        TERMCOLORS=true
         # Define the color scheme using tput
         bold="$(${TPUT} bold)"
         underline="$(${TPUT} smul)"
@@ -294,9 +294,10 @@ function auto_detect_terminal_colors() {
         white="$(${TPUT} setaf 7)"
       fi
     fi 
+  else
+    # This isn't a terminal. Disable colors.
+    TERMCOLORS=false
   fi 
-  # This isn't a terminal. Disable colors.
-  TERMCOLORS=0
 
   # Call setup_strings to use color or no color
   setup_strings
@@ -319,7 +320,7 @@ pushd $PWD &> /dev/null
 display_test_start_info
 
 # Call internal functions to initialize and verify the environment
-process_args $@
+process_args "$@"
 verify_cmds
 verify_os
 sysinfo
