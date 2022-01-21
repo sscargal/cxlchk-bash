@@ -36,11 +36,12 @@ function optane_check_region_capacity() {
 
   # Report Regions with different capacities
   if [[ ${#REGION_CAPACITY[@]} -gt 1 ]]; then
-    info_msg "Multiple (${#REGION_CAPACITY[@]}) Region have different capacities!"
+    info_msg "Multiple (${#REGION_CAPACITY[@]}) Regions have different capacities!"
     for r in "${!REGION_CAPACITY[@]}" ; do # Display the full list of Regions found
       REGION_LIST=${REGION_CAPACITY[${r}]::-1} # Strip the last character ',' from the string
-      info_msg "${r} = ${REGION_LIST}"
+      info_msg "Region ${REGION_LIST} = ${r}"
     done
+    ERR_STATE=true
   fi
 
   # Return the final PASS/FAIL to the user
