@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+#set -x
+
+# Prevent repeated sourcing
+if [ -n "${__MODULE_CHECK_REGION_PERSISTENTMEMORYTYPE_}" ]; then
+  return
+fi
+__MODULE_CHECK_REGION_PERSISTENTMEMORYTYPE_="Loaded"
+
+# Validate all regions have the same PersistentMemoryType (MemoryMode, AppDirect, AppDirectNotInterleaved) 
+function optane_check_region_persistentmemorytype() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=false # Used for error reporting
+
+  # Exit the function with INFO message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    info_msg " Could not process '${FNAME}'. File not found"
+    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    return
+  fi
+
+  # Create Associative Arrays
+  declare -A REGION_TYPE    # Key is the Capacity; Value is a list of Regions with this Capacity
+
+  # Get the SocketID and Capacity fields from the input file
+  while IFS='|' read -r SocketID ISetID PersistentMemoryType Capacity FreeCapacity HealthState
+  do
+    SocketID="$(echo ${SocketID})"      # Remove leading and trailing whitespaces
+    PersistentMemoryType="$(echo ${PersistentMemoryType})"      # Remove leading and trailing whitespaces
+    if [ ${OPT_VERBOSITY} -ge 3 ]; then
+      debug_msg "Socket PersistentMemoryType: ${SocketID}=${PersistentMemoryType}"
+    fi
+    # Add the Region Type to the array 
+    REGION_TYPE[${PersistentMemoryType}]+="${SocketID},"
+  done <<<  "$(tail -n +3 ${FNAME})" # Skip the header lines (1&2), and start reading from line 3
+
+  # Report Regions with different types
+  if [[ ${#REGION_TYPE[@]} -gt 1 ]]; then
+    info_msg "Multiple (${#REGION_TYPE[@]}) Region have different PersistentMemoryType configurations!"
+    for r in "${!REGION_TYPE[@]}" ; do # Display the full list of Regions found
+      REGION_LIST=${REGION_TYPE[${r}]::-1} # Strip the last character ',' from the string
+      info_msg "${r} = ${REGION_LIST}"
+    done
+    ERR_STATE=true
+  fi
+
+  # Return the final PASS/FAIL to the user
+  if [ "${ERR_STATE}" = true ] ; then
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more regions have different PersistentMemoryType configurations. See previous errors."
+    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+  else
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All Regions have the same PersistentMemoryType configuration"
+    REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+  fi
+}
+
+# Call the main function
+optane_check_region_persistentmemorytype "${OUTPUT_PATH}/ipmctl_show_-region"
