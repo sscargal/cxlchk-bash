@@ -189,6 +189,10 @@ function process_args() {
     A) # Skip running the data collector and analyze a collected dataset (path specified by user)
       OPT_A=true
       OUTPUT_PATH=$OPTARG
+      if [ ! -d "$OUTPUT_PATH" ]; then
+	echo "Error: The directory containing the date does not exist"
+	exit 1
+      fi
       ;;
     C) # Run the collector only. Do not run the analyzer 
       OPT_C=true
