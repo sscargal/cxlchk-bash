@@ -189,7 +189,7 @@ function process_args() {
     A) # Skip running the data collector and analyze a collected dataset (path specified by user)
       OPT_A=true
       OUTPUT_PATH=$OPTARG
-      if [ ! -d "$OUTPUT_PATH" ]; then
+      if [[ ! -d "${OUTPUT_PATH}" ]]; then
 	echo "Error: The directory containing the date does not exist"
 	exit 1
       fi
@@ -241,17 +241,19 @@ function init_outputs() {
 # Define string definitions based on whether colors are or are not supported by the terminal
 function setup_strings() {
   if [[ "${TERMCOLORS}" = true ]]; then
-    STR_PASSED="${green}[ PASSED  ]${normal}"
-    STR_WARN="${yellow}[ WARNING ]${normal}"
-    STR_FAIL="${red}[ FAILED  ]${normal}"
-    STR_INFO="${magenta}[ INFO    ]${normal}"
-    STR_DEBUG="${cyan}[ DEBUG   ]${normal}"
+    STR_PASSED="${green}[ PASSED   ]${normal}"
+    STR_WARN="${yellow}[ WARNING  ]${normal}"
+    STR_FAIL="${red}[ FAILED   ]${normal}"
+    STR_INFO="${magenta}[ INFO     ]${normal}"
+    STR_DEBUG="${cyan}[ DEBUG    ]${normal}"
+    STR_CRIT="${red}[ CRITICAL ]${normal}"
   else
-    STR_PASSED="[ PASSED  ]"
-    STR_WARN="[ WARNING ]"
-    STR_FAIL="[ FAILED  ]"
-    STR_INFO="[ INFO    ]"
-    STR_DEBUG="[ DEBUG   ]"
+    STR_PASSED="[ PASSED   ]"
+    STR_WARN="[ WARNING  ]"
+    STR_FAIL="[ FAILED   ]"
+    STR_INFO="[ INFO     ]"
+    STR_DEBUG="[ DEBUG    ]"
+    STR_CRIT="[ CRITICAL ]"
   fi
 }
 
