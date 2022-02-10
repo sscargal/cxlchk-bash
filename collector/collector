@@ -237,6 +237,64 @@ function collect_cmds() {
 }
 
 #################################################################################################
+# Post-Process Data Functions
+#################################################################################################
+
+# Reformat the `ipmctl` output from the collected data in to easily parsable data (columnar)
+function reformat_ipmctl-a_file() {
+  local FNAME=$1        # File name to process
+
+  # AWK rules explanation
+  # 
+  # Change the Output Field Separator to the '|' symbol
+  # BEGIN {OFS="|"}
+  #
+  # For all rows that do not begin with '---', remove all leading and trailing white spaces, then print the HdrValue and Fields 1 and 2, then move to the next row
+  # Performing this row first avoids unnecessary test conditions if we were to place this rule later in the order
+  # $0 !~ /^---/ {gsub(/^[ \t]+|[ \t]+$/, "", $0);print HdrValue,$1,$2; next}
+  #
+  # For rows that begin with '---', replace '---' with blanks, then set HdrStr to Field 1 and HdrValue to Field 2
+  # $0 ~ /^---/ {gsub(/\-/, "", $0); HdrStr=$1; HdrValue=$2;}
+  #
+  # Print the output Header if processing the first row in the input file
+  # NR == 1 {print HdrStr"|Property|Value";}
+  #
+  # The results are saved to a *.psv (Pipe Separated Value) file
+  ${AWK} -F '[=]' 'BEGIN {OFS="|"} 
+    $0 !~ /^---/ {gsub(/^[ \t]+|[ \t]+$/, "", $0);print HdrValue,$1,$2; next} 
+    $0 ~ /^---/ {gsub(/\-/, "", $0); HdrStr=$1; HdrValue=$2;} 
+    NR == 1 {print HdrStr"|Property|Value";} 
+  ' ${FNAME} > ${FNAME}.psv
+}
+
+function reformat_ipmctl-a_files() {
+  echo "Post-Processing Collected Data"
+  IFS="" #Change the delimiter to prevent Bash separating elements by spaces
+  ipmctl_a_files=(
+    ipmctl_show_-a_-dimm
+    ipmctl_show_-a_-firmware
+    ipmctl_show_-a_-region
+    ipmctl_show_-a_-socket
+    ipmctl_show_-a_-topology
+  )
+  
+  # Process each file in the list
+  for file in ${ipmctl_a_files[@]}; do
+    file="${OUTPUT_PATH}/${file}"
+    # Verify the file exists
+    if [[ -f "${file}" ]] ; then
+      # Provide progress to user
+      # TODO: Display a percentage progress bar. For now. dots will do.
+      echo -n "."
+      reformat_ipmctl-a_file "${file}"
+    fi
+  done
+ 
+  echo ""
+  unset IFS
+}
+
+#################################################################################################
 # Helper Functions
 #################################################################################################
 
@@ -277,8 +335,8 @@ display_collector_header
 ipmctl_collector
 ndctl_collector
 cxl_collector
-#general_collector
 collect_files
 collect_cmds
+reformat_ipmctl-a_files
 collector_cleanup
 display_collector_end
