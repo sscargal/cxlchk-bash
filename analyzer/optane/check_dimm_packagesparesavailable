@@ -25,8 +25,9 @@ function optane_check_dimm_packagesparesavailable() {
   # Get the DimmID, Property, and Value fields from the input file
   while IFS='|' read -r DimmID Property Value 
   do
-    DimmID="$(echo ${DimmID})"        # Remove leading and trailing whitespaces
-    PropertyValue="$(echo ${Value})"  # Remove leading and trailing whitespaces
+    DimmID="$(echo ${DimmID})"         # Remove leading and trailing whitespaces
+    PropertyType="$(echo ${Property})" # Remove leading and trailing whitespaces
+    PropertyValue="$(echo ${Value})"   # Remove leading and trailing whitespaces
     if [ ${OPT_VERBOSITY} -ge 3 ]; then
       debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
     fi
@@ -40,7 +41,7 @@ function optane_check_dimm_packagesparesavailable() {
 
   # Report non-Healthy DIMMs
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Multiple (${#DIMM_HEALTH[@]}) ${Property} DIMM states found!"
+    info_msg "Multiple (${#DIMM_HEALTH[@]}) ${PropertyType} DIMM states found!"
     for d in "${!DIMM_HEALTH[@]}" ; do # Display the full list of DIMMs found
       DIMM_LIST=${DIMM_HEALTH[${d}]::-1} # Strip the last character ',' from the string
       info_msg "${d} = ${DIMM_LIST}"
