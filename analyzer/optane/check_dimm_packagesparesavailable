@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+#set -x
+
+# Prevent repeated sourcing
+if [ -n "${__MODULE_CHECK_DIMM_PACKAGESPARESAVAILABLE_}" ]; then
+  return
+fi
+__MODULE_CHECK_DIMM_PACKAGESPARESAVAILABLE_="Loaded"
+
+# Validate DIMM PackageSparesAvailable 
+function optane_check_dimm_packagesparesavailable() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=false # Used for error reporting
+
+  # Exit the function with INFO message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    info_msg " Could not process '${FNAME}'. File not found"
+    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    return
+  fi
+
+  # Create Associative Array
+  declare -A DIMM_HEALTH  # Key is the DIMM Property value; Value is a list of DIMMs with this Property value
+
+  # Get the DimmID, Property, and Value fields from the input file
+  while IFS='|' read -r DimmID Property Value 
+  do
+    DimmID="$(echo ${DimmID})"        # Remove leading and trailing whitespaces
+    PropertyValue="$(echo ${Value})"  # Remove leading and trailing whitespaces
+    if [ ${OPT_VERBOSITY} -ge 3 ]; then
+      debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
+    fi
+    # Report PMem Modules with 0 PackageSparesAvailable
+    if [[ "${PropertyValue}" -eq 0 ]]; then
+      ERR_STATE=true
+    fi
+    # Add the DIMM to the associative array 
+    DIMM_HEALTH[${PropertyValue}]+="${DimmID},"
+  done <<<  "$(grep PackageSparesAvailable ${FNAME})" # Skip the header lines (1&2), and start reading from line 3
+
+  # Report non-Healthy DIMMs
+  if [ "${ERR_STATE}" = true ]; then
+    info_msg "Multiple (${#DIMM_HEALTH[@]}) ${Property} DIMM states found!"
+    for d in "${!DIMM_HEALTH[@]}" ; do # Display the full list of DIMMs found
+      DIMM_LIST=${DIMM_HEALTH[${d}]::-1} # Strip the last character ',' from the string
+      info_msg "${d} = ${DIMM_LIST}"
+    done
+  fi
+
+  # Return the final PASS/FAIL to the user
+  if [ "${ERR_STATE}" = true ] ; then
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules reported 0 PackageSparesAvailable" 
+    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+  else
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have 1 PackageSparesAvailable"
+    REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+  fi
+}
+
+# Call the main function
+optane_check_dimm_packagesparesavailable "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
