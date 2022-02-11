@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 #set -x
 
+###############################################################################
 # Define the message type printing formats
+###############################################################################
 
 _HDR_FMT="%s %s "
 _MSG_FMT="${_HDR_FMT} : %s\n"
@@ -19,3 +21,32 @@ function crit_msg() {
   echo "${STR_CRIT} ${FUNCNAME[1]} : ${@}"
 }
 
+###############################################################################
+# Progress Bar
+###############################################################################
+
+function init_progressbar() {
+        #START_DATE=$(date +%s)
+        TOTAL="$1"
+        COUNT=0
+}
+
+function inc_progressbar() {
+        COUNT=$((COUNT+1))
+        PERCENT=$((100 * COUNT / TOTAL))
+        BARLEN=$((PERCENT / 5))
+        #TIME=$(( $(date +%s) - START_DATE ))
+        REMAINING=$(( ((100*TIME/COUNT) * (TOTAL-COUNT))/100 ))
+
+        printf "\r%d%% (%d of %d)  [" "$PERCENT" "$COUNT" "$TOTAL"
+        for i in {1..20}
+        do
+                if [ "$i" -gt "$BARLEN" ]
+                then printf "%s" " "
+                else printf "%s" "="
+                fi
+        done
+
+        #printf "] %ds remaining     " "$REMAINING"
+        printf "] "
+}
