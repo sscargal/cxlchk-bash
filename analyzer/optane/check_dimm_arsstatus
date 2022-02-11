@@ -37,7 +37,7 @@ function optane_check_dimm_arsstatus() {
     fi
     # Add the DIMM to the associative array 
     DIMM_HEALTH[${PropertyValue}]+="${DimmID},"
-  done <<<  "$(${GREP} ARSStatus  ${FNAME})" 
+  done <<<  "$(${GREP} ARSStatus  ${FNAME})" || return 0
 
   # Report non-Healthy DIMMs
   if [ "${ERR_STATE}" = true ]; then

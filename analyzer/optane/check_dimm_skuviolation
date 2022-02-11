@@ -37,7 +37,7 @@ function optane_check_dimm_skuviolation() {
     fi
     # Add the DIMM to the associative array 
     DIMM_HEALTH[${PropertyValue}]+="${DimmID},"
-  done <<<  "$(${GREP} SKUViolation ${FNAME})" # Skip the header lines (1&2), and start reading from line 3
+  done <<<  "$(${GREP} SKUViolation ${FNAME})" || return 0
 
   # Report non-Healthy DIMMs
   if [ "${ERR_STATE}" = true ]; then

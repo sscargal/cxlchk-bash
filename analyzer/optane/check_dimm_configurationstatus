@@ -37,7 +37,7 @@ function optane_check_dimm_configurationstatus() {
     fi
     # Add the DIMM to the associative array 
     DIMM_HEALTH[${PropertyValue}]+="${DimmID},"
-  done <<<  "$(${GREP} ConfigurationStatus ${FNAME})" 
+  done <<<  "$(${GREP} ConfigurationStatus ${FNAME})" || return 0
 
   # Report non-Healthy DIMMs
   if [ "${ERR_STATE}" = true ]; then
