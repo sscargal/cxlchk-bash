@@ -37,7 +37,7 @@ function optane_check_dimm_packagesparingcapable() {
     fi
     # Add the DIMM to the associative array 
     DIMM_HEALTH[${PropertyValue}]+="${DimmID},"
-  done <<<  "$(grep PackageSparingCapable ${FNAME})" 
+  done <<<  "$(${GREP} PackageSparingCapable ${FNAME})" || return 0
 
   # Report non-Healthy DIMMs
   if [ "${ERR_STATE}" = true ]; then

@@ -42,7 +42,7 @@ function optane_check_percentage_remaining() {
       crit_msg "DimmID ${DimmID} has ${CurrentValue}% life remaining"
       ERR_STATE=true
     fi	
-  done <<<  "$(grep PercentageRemaining ${FNAME})" # Obtain percent remaining from file
+  done <<<  "$(${GREP} PercentageRemaining ${FNAME})" || return 0
 
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
