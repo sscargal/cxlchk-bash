@@ -89,8 +89,8 @@ function ndctl_collector() {
   ndctl_args=(
     "version"
     "list -vvv"
-    "list --dimms --firmware --health --media-errors"
-    "list --dimms --firmware --health --media-errors --idle"
+    "list --dimms --health --media-errors"
+    "list --dimms --health --media-errors --idle"
     "list --regions"
     "list --regions --idle"
     "list --namespaces --device-dax"
