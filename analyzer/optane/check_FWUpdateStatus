@@ -37,7 +37,7 @@ function optane_check_dimm_FWUpdateStatus() {
     fi
     # Add the DIMM to the associative array 
    FW_Version[${PropertyValue}]+="${DimmID},"
-  done <<<  "$(grep StagedFWVersion ${FNAME})" 
+  done <<<  "$(${GREP} StagedFWVersion ${FNAME})" || return 0 
 
   # Report DIMMS with staged firmware
   if [ "${ERR_STATE}" = true ]; then
