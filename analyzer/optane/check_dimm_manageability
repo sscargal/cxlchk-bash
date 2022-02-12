@@ -2,10 +2,10 @@
 #set -x
 
 # Prevent repeated sourcing
-if [ -n "${__MODULE_CHECK_DIMM_ManageabilityState_}" ]; then
+if [ -n "${__MODULE_CHECK_DIMM_MANAGEABILITYSTATE_}" ]; then
   return
 fi
-__MODULE_CHECK_ManageabilityState_="Loaded"
+__MODULE_CHECK_MANAGEABILITYSTATE_="Loaded"
 
 # Validate DIMM PackageSparingCapable != 1 (True)
 function optane_check_dimm_ManageabilityState() {
