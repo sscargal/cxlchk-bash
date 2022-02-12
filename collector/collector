@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#/usr/bin/env bash
 
 # Collect information from the host to be post-processed by the analyzer
 
@@ -48,11 +48,14 @@ function ipmctl_collector() {
     "show -pcd LSA"
     "show -cel"
   )
+
+  # Initialize the progress bar
+  init_progressbar "${#ipmctl_args[@]}"
   
   for arg in ${ipmctl_args[@]}; do
     # Provide progress to user
-    # TODO: Display a percentage progress bar. For now. dots will do.
-    echo -n "."
+    inc_progressbar
+
     # Create output files
     # Replace spaces in the command and agrs to be used as the output file name
     OFNAME="ipmctl ${arg}"
@@ -96,11 +99,14 @@ function ndctl_collector() {
     "list --namespaces --device-dax"
     "list --namespaces --device-dax --idle"
   )
+ 
+  # Initialize the progress bar
+  init_progressbar "${#ndctl_args[@]}"
 
   for arg in ${ndctl_args[@]}; do
     # Provide progress to user
-    # TODO: Display a percentage progress bar. For now. dots will do.
-    echo -n "."
+    inc_progressbar
+
     # Create output files
     # Replace spaces in the command and agrs to be used as the output file name
     OFNAME="ndctl ${arg}"
@@ -140,10 +146,13 @@ function cxl_collector() {
     "list --memdevs --health --idle"
   )
 
+  # Initialize the progress bar
+  init_progressbar "${#cxl_args[@]}"
+
   for arg in ${cxl_args[@]}; do
     # Provide progress to user
-    # TODO: Display a percentage progress bar. For now. dots will do.
-    echo -n "."
+    inc_progressbar
+
     # Create output files
     # Replace spaces in the command and agrs to be used as the output file name
     OFNAME="cxl ${arg}"
@@ -177,10 +186,13 @@ function collect_files() {
     "/var/log/messages"
   )
 
+  # Initialize the progress bar
+  init_progressbar "${#files_to_collect[@]}"
+
   for file in ${files_to_collect[@]}; do
     # Provide progress to user
-    # TODO: Display a percentage progress bar. For now. dots will do.
-    echo -n "."
+    inc_progressbar
+
     if [ ${OPT_VERBOSITY} -ge 2 ]; then
       debug_msg "Collecting ${file}"
     fi
@@ -208,10 +220,13 @@ function collect_cmds() {
     "lscpu"
   )
 
+  # Initialize the progress bar
+  init_progressbar "${#commands_to_collect[@]}"
+
   for cmd in ${commands_to_collect[@]}; do
     # Provide progress to user
-    # TODO: Display a percentage progress bar. For now. dots will do.
-    echo -n "."
+    inc_progressbar
+
     if [ ${OPT_VERBOSITY} -ge 2 ]; then
       debug_msg "Collecting ${cmd}"
     fi
@@ -277,6 +292,9 @@ function reformat_ipmctl-a_files() {
     ipmctl_show_-a_-socket
     ipmctl_show_-a_-topology
   )
+
+  # Initialize the progress bar
+  init_progressbar "${#ipmctl_a_files[@]}"
   
   # Process each file in the list
   for file in ${ipmctl_a_files[@]}; do
@@ -284,8 +302,8 @@ function reformat_ipmctl-a_files() {
     # Verify the file exists
     if [[ -f "${file}" ]] ; then
       # Provide progress to user
-      # TODO: Display a percentage progress bar. For now. dots will do.
-      echo -n "."
+      inc_progressbar
+
       reformat_ipmctl-a_file "${file}"
     fi
   done
