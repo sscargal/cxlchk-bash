@@ -2,13 +2,13 @@
 #set -x
 
 # Prevent repeated sourcing
-if [ -n "${__MODULE_CHECK_DIMM_FW_Update_Status_}" ]; then
+if [ -n "${__MODULE_CHECK_DIMM_FW_UPDATE_STATUS_}" ]; then
   return
 fi
-__MODULE_CHECK_DIMM_FW_Update_Status_="Loaded"
+__MODULE_CHECK_DIMM_FW_UPDATE_STATUS__="Loaded"
 
-# Validate DIMM PackageSparingCapable != 1 (True)
-function optane_check_dimm_FWUpdateStatus() {
+# Validate FW Update Status  == N/A
+function optane_check_dimm_fwupdatestatus() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
 
@@ -31,7 +31,7 @@ function optane_check_dimm_FWUpdateStatus() {
     if [ ${OPT_VERBOSITY} -ge 3 ]; then
       debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
     fi
-    # Report PMem Modules that have PackageSparingCapable  = 0 (False/Disabled) 
+    # Report PMem Modules that have FW Update Status != N/A 
     if [[ "$PropertyValue" != "N/A" ]]; then
       ERR_STATE=true
     fi
@@ -50,13 +50,13 @@ function optane_check_dimm_FWUpdateStatus() {
 
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules reported PackageSparingCapable = False" 
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules have a staged Firmware Update" 
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
   else
-    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem have no staged Firmware Update" 
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have no staged Firmware Update" 
     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
   fi
 }
 
 # Call the main function
-optane_check_dimm_FWUpdateStatus "${OUTPUT_PATH}/ipmctl_show_-a_-firmware.psv"
+optane_check_dimm_fwupdatestatus "${OUTPUT_PATH}/ipmctl_show_-a_-firmware.psv"
