@@ -44,6 +44,5 @@ function optane_check_dimm_software_trigger_counter() {
     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
   fi
 }
-
 # Call the main function
 optane_check_dimm_software_trigger_counter "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
