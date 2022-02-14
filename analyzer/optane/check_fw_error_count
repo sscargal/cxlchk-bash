@@ -2,13 +2,13 @@
 #set -x
 
 # Prevent repeated sourcing
-if [ -n "${__MODULE_CHECK_FW_ERROR_COUNT__}" ]; then
+if [ -n "${_MODULE_CHECK_FW_ERROR_COUNT_}" ]; then
   return
 fi
-__MODULE_CHECK_FW_ERROR_COUNT__="Loaded"
+_MODULE_CHECK_FW_ERROR_COUNT_="Loaded"
 
-# check percentage remaining
-function optane_check_FW_Error_Count() {
+# check Firmware Error Count
+function optane_check_fw_error_count() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
 
@@ -25,35 +25,34 @@ function optane_check_FW_Error_Count() {
     DimmID="$(echo ${DimmID})"
     CurrentValue=(${CurrentValue})
 
-    # Check the FWErro Count
-
-    if [[ ${CurrentValue} -lt 5 ]] && [[ ${CurrentValue} -ge 2 ]]
+    # Check the FWError Count
+    if [[ ${CurrentValue} -lt 49 ]] && [[ ${CurrentValue} -ge 10 ]]
     then
       REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
       info_msg "DimmID ${DimmID} has ${CurrentValue} FwError Count"
-    elif [[ ${CurrentValue} -lt 10 ]] && [[ ${CurrentValue} -ge 5 ]]
+    elif [[ ${CurrentValue} -lt 100 ]] && [[ ${CurrentValue} -ge 50 ]]
     then
       REPORT_COUNT_WARNINGS=$((REPORT_COUNT_WARNINGS+1))
       warn_msg "DimmID ${DimmID} has ${CurrentValue} FwError Count"
       ERR_STATE=true
-    elif [[ ${CurrentValue} -ge 10 ]]
+    elif [[ ${CurrentValue} -ge 100 ]]
     then
       REPORT_COUNT_CRITICAL=$((REPORT_COUNT_CRITICAL+1))
       crit_msg "DimmID ${DimmID} has ${CurrentValue} FwError Count"
       ERR_STATE=true
     fi
-  done <<<  "$(grep FwErrorCount ${FNAME})" # Obtain percent remaining from file
+  done <<<  "$(${GREP} FwErrorCount ${FNAME})" || return 0
 
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem Modules have less than 100% life remaining."
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem Modules reported having  50 or more FWError Count."
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
   else
-    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem Modules have 100% life remaining"
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem Modules have less than 10 FWError Counts "
     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
   fi
 }
 
 # Call the main function
-optane_check_FW_Error_Count "${OUTPUT_PATH}/ipmctl_show_-sensor"
+optane_check_fw_error_count "${OUTPUT_PATH}/ipmctl_show_-sensor"
 

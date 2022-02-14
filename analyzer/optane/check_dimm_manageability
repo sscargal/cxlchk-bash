@@ -7,8 +7,8 @@ if [ -n "${__MODULE_CHECK_DIMM_MANAGEABILITYSTATE_}" ]; then
 fi
 __MODULE_CHECK_MANAGEABILITYSTATE_="Loaded"
 
-# Validate DIMM PackageSparingCapable != 1 (True)
-function optane_check_dimm_ManageabilityState() {
+# This should be 'Validate DIMM Manageability State = Managable
+function optane_check_dimm_manageabilitystate() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
 
@@ -20,7 +20,7 @@ function optane_check_dimm_ManageabilityState() {
   fi
 
   # Create Associative Array
-  declare -A Manageability_State  # Key is the DIMM Property value; Value is a list of DIMMs with this Property value
+  declare -A MANAGEABILITY_STATE  # Key is the DIMM Property value; Value is a list of DIMMs with this Property value
 
   # Get the DimmID, Property, and Value fields from the input file
   while IFS='|' read -r DimmID Property Value 
@@ -31,26 +31,26 @@ function optane_check_dimm_ManageabilityState() {
     if [ ${OPT_VERBOSITY} -ge 3 ]; then
       debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
     fi
-    # Report PMem Modules that have PackageSparingCapable  = 0 (False/Disabled) 
+    # Report PMem Modules that have Manageability State = Managable 
     if [[ "${PropertyValue}" -ne "Manageable" ]]; then
       ERR_STATE=true
     fi
     # Add the DIMM to the associative array 
-   Manageability_State[${PropertyValue}]+="${DimmID},"
+   MANAGEABILITY_STATE[${PropertyValue}]+="${DimmID},"
   done <<<  "$(${GREP} ManageabilityState ${FNAME})" 
 
   # Report DIMMS with ManageabilityState = "Unmanageable"
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Multiple (${#Manageability_State[@]}) ${Property} DIMM states found!"
-    for d in "${!Manageability_State[@]}" ; do # Display the full list of DIMMs found
-      Manageability_State=${Manageability_State[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${Manageability_State}"
+    info_msg "Multiple (${#MANAGEABILITY_STATE[@]}) ${Property} DIMM states found!"
+    for d in "${!MANAGEABILITY_STATE[@]}" ; do # Display the full list of DIMMs found
+      MANAGEABILITY_STATE=${MANAGEABILITY_STATE[${d}]::-1} # Strip the last character ',' from the string
+      info_msg "${d} = ${MANAGEABILITY_STATE}"
     done
   fi
 
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules reported Unmanageable" 
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules reported ManageabilityState as Unmanageable" 
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
   else
     echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules are manageable" 
@@ -59,4 +59,4 @@ function optane_check_dimm_ManageabilityState() {
 }
 
 # Call the main function
-optane_check_dimm_ManageabilityState "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
+optane_check_dimm_manageabilitystate "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
