@@ -2,13 +2,13 @@
 #set -x
 
 # Prevent repeated sourcing
-if [ -n "${__MODULE_CHECK_DIMM_Software_Trigger_Counter_}" ]; then
+if [ -n "${_MODULE_CHECK_DIMM_SOFTWARE_TRIGGER_COUNTER_}" ]; then
   return
 fi
-__MODULE_CHECK_Software_Trigger_Counter_="Loaded"
+_MODULE_CHECK_SOFTWARE_TRIGGER_COUNTER__="Loaded"
 
-# Validate DIMM PackageSparingCapable != 1 (True)
-function optane_check_dimm_Software_Trigger_Counter() {
+# Validate DIMM Software Trigger is not equal to 0
+function optane_check_dimm_software_trigger_counter() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
 
@@ -19,8 +19,6 @@ function optane_check_dimm_Software_Trigger_Counter() {
     return
   fi
 
-  # Create Associative Array
-  declare -A Software_Trigger_Counter  # Key is the DIMM Property value; Value is a list of DIMMs with this Property value
 
   # Get the DimmID, Property, and Value fields from the input file
   while IFS='|' read -r DimmID Property Value 
@@ -35,28 +33,17 @@ function optane_check_dimm_Software_Trigger_Counter() {
     if [[ "${PropertyValue}" -ne 0 ]]; then
       ERR_STATE=true
     fi
-    # Add the DIMM to the associative array 
-  # Soitware_Trigger_Counter[${PropertyValue}]+="${DimmID},"
   done <<<  "$(${GREP} SoftwareTriggerCounter ${FNAME})" || return 0 
 
- # Report DIMMS with ManageabilityState = "Unmanageable"
- # if [ "${ERR_STATE}" = true ]; then
- #  info_msg "Multiple (${#Software_Trigger_Counter[@]}) ${Property} DIMM states found!"
- #   for d in "${!Software_Trigger_Counter[@]}" ; do # Display the full list of DIMMs found
- #     Software_Trigger_Counter=${Software_Trigger_Counter[${d}]::-1} # Strip the last character ',' from the string
- #     info_msg "${d} = ${Software_Trigger_Counter}"
- #   done
- # fi
-
-  # Return the final PASS/FAIL to the user
+  # check for the final pass or fail
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules reported Software Trigger Counter greater than 0" 
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules reported Software Trigger Counter equal to 0" 
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
   else
-    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have Software Trigger Counter equal to 0" 
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have Software Trigger Counter greater than 0" 
     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
   fi
 }
 
 # Call the main function
-optane_check_dimm_Software_Trigger_Counter "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
+optane_check_dimm_software_trigger_counter "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
