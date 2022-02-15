@@ -2,13 +2,13 @@
 #set -x
 
 # Prevent repeated sourcing
-if [ -n "${__MODULE_CHECK_DIMM_MediaTemperatureInjectionsCounter_}" ]; then
+if [ -n "${_MODULE_CHECK_DIMM_MEDIA_TEMP_INJECTION_COUNTER_}" ]; then
   return
 fi
-__MODULE_CHECK_MediaTemperatureInjectionsCounter_="Loaded"
+_MODULE_CHECK_DIMM_MEDIA_TEMP_INJECTION_COUNTER_="Loaded"
 
-# Validate DIMM PackageSparingCapable != 1 (True)
-function optane_check_dimm_MediaTemperatureInjectionsCounter() {
+# Validate Temp Injection Counter != 0
+function optane_check_dimm_media_temperature_injections_count() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
 
@@ -20,7 +20,7 @@ function optane_check_dimm_MediaTemperatureInjectionsCounter() {
   fi
 
   # Create Associative Array
-  declare -A MediaTemperatureInjectionsCounter  # Key is the DIMM Property value; Value is a list of DIMMs with this Property value
+  declare -A MEDIA_TEMP_INJ_COUNETER  # Key is the DIMM Property value; Value is a list of DIMMs with this Property value
 
   # Get the DimmID, Property, and Value fields from the input file
   while IFS='|' read -r DimmID Property Value 
@@ -36,27 +36,27 @@ function optane_check_dimm_MediaTemperatureInjectionsCounter() {
       ERR_STATE=true
     fi
     # Add the DIMM to the associative array 
-   MediaTemperatureInjectionsCounter[${PropertyValue}]+="${DimmID},"
-  done <<<  "$(${GREP} ManageabilityState ${FNAME})" || return 0
+   MEDIA_TEMP_INJ_COUNETER[${PropertyValue}]+="${DimmID},"
+  done <<<  "$(${GREP} MediaTemperatureInjectionsCounter ${FNAME})" || return 0
 
-  # Report DIMMS with ManageabilityState = "Unmanageable"
+  # Report DIMMS with MediaTemperatureCounter value != 0
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Multiple (${#MediaTemperatureInjectionsCounter[@]}) ${Property} DIMM states found!"
-    for d in "${!MediaTemperatureInjectionsCounter[@]}" ; do # Display the full list of DIMMs found
-      MediaTemperatureInjectionsCounter=${MediaTemperatureInjectionsCounter[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${MediaTemperatureInjectionsCounter}"
+    info_msg "Multiple (${#MEDIA_TEMP_INJ_COUNETER[@]}) ${Property} DIMM states found!"
+    for d in "${!MEDIA_TEMP_INJ_COUNETER[@]}" ; do # Display the full list of DIMMs found
+      MEDIA_TEMP_INJ_COUNETER=${MEDIA_TEMP_INJ_COUNETER[${d}]::-1} # Strip the last character ',' from the string
+      info_msg "${d} = ${MEDIA_TEMP_INJ_COUNETER}"
     done
   fi
 
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules have 0  Media Temperature Injection Counter " 
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules have greater than 0  Media Temperature Injection Counter " 
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
   else
-    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have greater than 0 Media Temperature Injection Counter" 
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have 0 Media Temperature Injection Counter" 
     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
   fi
 }
 
 # Call the main function
-optane_check_dimm_MediaTemperatureInjectionsCounter "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
+optane_check_dimm_media_temperature_injections_count "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
