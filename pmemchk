@@ -33,6 +33,9 @@ TERMCOLORS=false				# Use terminal colors or not (default: FALSE)
 OPT_VERBOSITY=0					# default, -v, -vv, -vvv option to increase verbose output
 OPT_A=false					# Determine if -A arg was passed in
 OPT_C=false					# Determine if -C arg was passed in
+OPT_m=false					# Determine if -m arg was passed in
+
+ANALYZER_MODULE_LIST=""				# A user defined list of modules to include or exclude during execution
 
 #################################################################################################
 # Helper Functions
@@ -163,14 +166,20 @@ function display_usage() {
   echo "   -C" 
   echo "      Run the collector only. Skips running the analyzer."
   echo " "
+  echo "   -c <Path to CXL executable>"
+  echo "      Specify the path to the CXL executable"
+  echo " "
   echo "   -h,-?" 
   echo "      Display this help"
   echo " "
   echo "   -i <Path to IPMCTL executable>"
   echo "      Specify the path to the IPMCTL executable"
   echo " "
-  echo "   -c <Path to CXL executable>"
-  echo "      Specify the path to the CXL executable"
+  echo "   -l" 
+  echo "      List Analyzer Modules and Rules"
+  echo " "
+  echo "   -m <module1, module2, ..., moduleN>"
+  echo "      Specify which Analyzer modules to include or exclude"
   echo " "
   echo "   -n <Path to NDCTL executable>"
   echo "      Specify the path to the NDCTL executable"
@@ -184,11 +193,11 @@ function display_usage() {
 function process_args() {
 
   # Process the command arguments and options
-  while getopts "h?A:Ci:n:v" opt; do
+  while getopts "h?A:Ci:lm:n:v" opt; do
     case "$opt" in
     A) # Skip running the data collector and analyze a collected dataset (path specified by user)
       OPT_A=true
-      OUTPUT_PATH=$OPTARG
+      OUTPUT_PATH=${OPTARG}
       if [[ ! -d "${OUTPUT_PATH}" ]]; then
 	echo "Error: The directory containing the date does not exist"
 	exit 1
@@ -201,10 +210,19 @@ function process_args() {
       display_usage $0
       ;;
     i) # Set the location of the ipmctl binary
-      IPMCTL=$OPTARG
+      IPMCTL=${OPTARG}
       ;;
+    l) # List Analyzer Modules and Rules
+      list_analyzer_modules
+      list_analyzer_rules 
+      exit 0
+      ;;
+    m) # User specifies which Analyzer modules to include or exclude
+      OPT_m=true
+      ANALYZER_MODULE_LIST=${OPTARG}
+      ;; 
     n) # Set the location of the ndctl binary
-      NDCTL=$OPTARG
+      NDCTL=${OPTARG}
       ;;
     v) # Each -v should increase OPT_VERBOSITY level
       OPT_VERBOSITY=$(($OPT_VERBOSITY+1))
@@ -212,7 +230,7 @@ function process_args() {
       . common/debug
       ;;
     *) # Invalid argument
-      display_usage $0
+      display_usage ${0}
       exit 1
       ;;
     esac
@@ -306,6 +324,42 @@ function auto_detect_terminal_colors() {
 
   # Call setup_strings to use color or no color
   setup_strings
+}
+
+# Get a list of Analyzer Modules
+function get_analyser_modules() {
+  ANALYZER_MODULE_LIST="$(${FIND} ./analyzer/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
+}
+
+# List available Analyzer modules
+# Support top-level modules only
+# TODO Add support for submodules 
+function list_analyzer_modules() {
+  get_analyser_modules
+  echo "Analyzer Modules"
+  echo "================"
+  for module in "${ANALYZER_MODULE_LIST[@]}"; do
+    echo "${module}"
+  done
+  echo ""
+}
+
+# Get a list of Analyzer Rules
+function get_analyzer_rules() {
+  ANALYZER_RULE_LIST="$(${FIND} analyzer/ -mindepth 1 ! -name "analyzer" -type f)" 
+}
+
+# List available Analyzer rules
+# TODO: Could improve this output to look like the tree command, or use the tree command if it exists
+function list_analyzer_rules() {
+  get_analyzer_rules
+  echo "Analyzer Rules"
+  echo "=============="
+  for rule in "${ANALYZER_RULE_LIST[@]}"; do
+    # Strip the leading "analyzer/" from the path
+    echo "${rule/analyzer\//}"
+  done
+  echo ""
 }
 
 #################################################################################################
