@@ -2,10 +2,10 @@
 #set -x
 
 # Prevent repeated sourcing
-if [ -n "${__MODULE_CHECK_DIMM_FW_UPDATE_STATUS_}" ]; then
+if [ -n "${_MODULE_CHECK_DIMM_FW_UPDATE_STATUS_}" ]; then
   return
 fi
-__MODULE_CHECK_DIMM_FW_UPDATE_STATUS__="Loaded"
+_MODULE_CHECK_DIMM_FW_UPDATE_STATUS_="Loaded"
 
 # Validate FW Update Status  == N/A
 function optane_check_dimm_fwupdatestatus() {
