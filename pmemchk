@@ -193,7 +193,7 @@ function display_usage() {
 function process_args() {
 
   # Process the command arguments and options
-  while getopts "h?A:Cci:lm:n:v" opt; do
+  while getopts "h?A:Cc:i:lm:n:v" opt; do
     case "$opt" in
     A) # Skip running the data collector and analyze a collected dataset (path specified by user)
       OPT_A=true
@@ -207,7 +207,7 @@ function process_args() {
       OPT_C=true
       ;;
     c) # Set the location of the cxl binary
-      CXLCLI=${{OPTARG}
+      CXLCLI="${OPTARG}"
       ;;
     h|\?)
       display_usage $0
