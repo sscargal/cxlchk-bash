@@ -2,13 +2,13 @@
 #set -x
 
 # Prevent repeated sourcing
-if [ -n "${__MODULE_CHECK_DIMM_MixedSKU_}" ]; then
+if [ -n "${_MODULE_CHECK_DIMM_MIXEDSKU_}" ]; then
   return
 fi
-__MODULE_CHECK_DIMM_MixedSKU_="Loaded"
+_MODULE_CHECK_DIMM_MIXEDSKU_="Loaded"
 
-# Validate DIMM PackageSparingCapable != 1 (True)
-function optane_check_MixedSKU() {
+# Validate DIMM MixedSKU !- 0
+function optane_check_mixed_sku() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
 
@@ -39,7 +39,7 @@ function optane_check_MixedSKU() {
    MixedSKU[${PropertyValue}]+="${DimmID},"
   done <<<  "$(${GREP} MixedSKU ${FNAME})" || return 0
 
-  # Report DIMMS with ManageabilityState = "Unmanageable"
+  # Report DIMMS with MixedSKU value greater than 0
   if [ "${ERR_STATE}" = true ]; then
     info_msg "Multiple (${#MixedSKU[@]}) ${Property} DIMM states found!"
     for d in "${!MixedSKU[@]}" ; do # Display the full list of DIMMs found
@@ -59,4 +59,4 @@ function optane_check_MixedSKU() {
 }
 
 # Call the main function
-optane_check_MixedSKU "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
+optane_check_mixed_sku "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
