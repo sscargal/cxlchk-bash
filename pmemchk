@@ -338,7 +338,7 @@ function list_analyzer_modules() {
   get_analyser_modules
   echo "Analyzer Modules"
   echo "================"
-  for module in ${ANALYZER_MODULE_LIST[@]}; do
+  for module in "${ANALYZER_MODULE_LIST[@]}"; do
     echo "${module}"
   done
   echo ""
@@ -355,7 +355,7 @@ function list_analyzer_rules() {
   get_analyzer_rules
   echo "Analyzer Rules"
   echo "=============="
-  for rule in ${ANALYZER_RULE_LIST[@]}; do
+  for rule in "${ANALYZER_RULE_LIST[@]}"; do
     # Strip the leading "analyzer/" from the path
     echo "${rule/analyzer\//}"
   done
