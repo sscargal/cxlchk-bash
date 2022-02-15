@@ -20,14 +20,20 @@ Optional args:
    -C
       Run the collector only. Skips running the analyzer.
 
+   -c <Path to CXL executable>
+      Specify the path to the CXL executable
+
    -h,-?
       Display this help
 
    -i <Path to IPMCTL executable>
       Specify the path to the IPMCTL executable
 
-   -c <Path to CXL executable>
-      Specify the path to the CXL executable
+   -l
+      List Analyzer Modules and Rules
+
+   -m <module1, module2, ..., moduleN>
+      Specify which Analyzer modules to include or exclude
 
    -n <Path to NDCTL executable>
       Specify the path to the NDCTL executable
@@ -51,6 +57,40 @@ $ sudo ./pmemchk -C
 Runs the analyzer against a previously collected dataset
 ```
 $ sudo ./pmemchk -A ./pmemchk.hostname.0113-1210
+```
+
+Specifies the location of the `ipmctl`,`ndctl`, and `cxl` utilities if they are not in the root users PATH
+```
+$ sudo ./pmemchk -c /usr/local/bin/cxl -i /usr/local/bin/ipmctl -n /usr/local/bin/ndctl
+```
+
+List the available Analyzer Modules and Rules
+```
+$ sudo ./pmemchk -l
+=======================================================================
+Starting PMem Checker
+pmemchk Version 0.1.0
+Started: Tue Feb 15 03:56:52 PM MST 2022
+=======================================================================
+Analyzer Modules
+================
+linux
+optane
+
+Analyzer Rules
+==============
+linux/parse_messages
+analyzer/optane/check_region_persistentmemorytype
+analyzer/optane/check_region_freecapacity
+analyzer/optane/check_dimm_lockstate
+analyzer/optane/check_dimm_firmware_version
+analyzer/optane/check_dimm_health_status
+analyzer/optane/check_dimm_arsstatus
+analyzer/optane/check_percentage_remaining
+analyzer/optane/check_dimm_population
+analyzer/optane/check_region_capacity
+analyzer/optane/check_region_health
+[...snip...]
 ```
 
 # Example Output
