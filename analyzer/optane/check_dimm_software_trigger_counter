@@ -5,7 +5,7 @@
 if [ -n "${_MODULE_CHECK_DIMM_SOFTWARE_TRIGGER_COUNTER_}" ]; then
   return
 fi
-_MODULE_CHECK_SOFTWARE_TRIGGER_COUNTER__="Loaded"
+_MODULE_CHECK_SOFTWARE_TRIGGER_COUNTER_="Loaded"
 
 # Validate DIMM Software Trigger is not equal to 0
 function optane_check_dimm_software_trigger_counter() {
@@ -37,10 +37,10 @@ function optane_check_dimm_software_trigger_counter() {
 
   # check for the final pass or fail
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules reported Software Trigger Counter equal to 0" 
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules reported Software Trigger Counter > 0" 
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
   else
-    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have Software Trigger Counter greater than 0" 
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have Software Trigger Counter == 0" 
     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
   fi
 }
