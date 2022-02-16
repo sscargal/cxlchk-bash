@@ -7,7 +7,7 @@ if [ -n "${_MODULE_CHECK_DIMM_MEDIA_TEMPERATURE_INJECTION_ENABLED_}" ]; then
 fi
 _MODULE_CHECK_DIMM_MEDIA_TEMPERATURE_INJECTION_ENABLED_="Loaded"
 
-# Validate DIMM Media Temperature Injection is dsiabled  
+# Validate DIMM Media Temperature Injection is enabled  
 function optane_check_media_temperature_injection_enabled() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
@@ -31,7 +31,7 @@ function optane_check_media_temperature_injection_enabled() {
     if [ ${OPT_VERBOSITY} -ge 3 ]; then
       debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
     fi
-    # Report PMem Modules that have PackageSparingCapable  = 0 (False/Disabled) 
+    # Report PMem modules that have MediaTemperatureInjection != 0 (enabled)
     if [[ "${PropertyValue}" -ne 0 ]]; then
       ERR_STATE=true
     fi
