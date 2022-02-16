@@ -20,7 +20,7 @@ function optane_check_dimm_media_temperature_injections_count() {
   fi
 
   # Create Associative Array
-  declare -A MEDIA_TEMP_INJ_COUNETER  # Key is the DIMM Property value; Value is a list of DIMMs with this Property value
+  declare -A MEDIA_TEMP_INJ_COUNTER  # Key is the DIMM Property value; Value is a list of DIMMs with this Property value
 
   # Get the DimmID, Property, and Value fields from the input file
   while IFS='|' read -r DimmID Property Value 
@@ -31,20 +31,20 @@ function optane_check_dimm_media_temperature_injections_count() {
     if [ ${OPT_VERBOSITY} -ge 3 ]; then
       debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
     fi
-    # Report PMem Modules that have PackageSparingCapable  = 0 (False/Disabled) 
+    # Report PMem Modules that have MediaTemperatureInjectionsCounter != 0 
     if [[ "${PropertyValue}" -ne 0 ]]; then
       ERR_STATE=true
     fi
     # Add the DIMM to the associative array 
-   MEDIA_TEMP_INJ_COUNETER[${PropertyValue}]+="${DimmID},"
+   MEDIA_TEMP_INJ_COUNTER[${PropertyValue}]+="${DimmID},"
   done <<<  "$(${GREP} MediaTemperatureInjectionsCounter ${FNAME})" || return 0
 
   # Report DIMMS with MediaTemperatureCounter value != 0
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Multiple (${#MEDIA_TEMP_INJ_COUNETER[@]}) ${Property} DIMM states found!"
-    for d in "${!MEDIA_TEMP_INJ_COUNETER[@]}" ; do # Display the full list of DIMMs found
-      MEDIA_TEMP_INJ_COUNETER=${MEDIA_TEMP_INJ_COUNETER[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${MEDIA_TEMP_INJ_COUNETER}"
+    info_msg "Multiple (${#MEDIA_TEMP_INJ_COUNTER[@]}) ${Property} DIMM states found!"
+    for d in "${!MEDIA_TEMP_INJ_COUNTER[@]}" ; do # Display the full list of DIMMs found
+      MEDIA_TEMP_INJ_COUNTER=${MEDIA_TEMP_INJ_COUNTER[${d}]::-1} # Strip the last character ',' from the string
+      info_msg "${d} = ${MEDIA_TEMP_INJ_COUNTER}"
     done
   fi
 
