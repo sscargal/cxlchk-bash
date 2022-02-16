@@ -20,7 +20,7 @@ function optane_check_dimm_reservedcapacity() {
   fi
 
   # Create Associative Arrays
-  declare -A DIMM_HEALTH    # Key is the FreeCapacity; Value is a list of Regions with this FreeCapacity
+  declare -A DIMM_HEALTH    # Key is the ReservedCapacity value; Value is a list of PMem Modules with this ReservedCapacity value
 
   # Get the SocketID and FreeCapacity fields from the input file
   while IFS='|' read -r DimmID Property Value
