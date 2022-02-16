@@ -31,7 +31,7 @@ function optane_check_mixed_sku() {
     if [ ${OPT_VERBOSITY} -ge 3 ]; then
       debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
     fi
-    # Report PMem Modules that have PackageSparingCapable  = 0 (False/Disabled) 
+    # Report PMem Modules that have MixedSKU != 0 
     if [[ "${PropertyValue}" -ne 0 ]]; then
       ERR_STATE=true
     fi
