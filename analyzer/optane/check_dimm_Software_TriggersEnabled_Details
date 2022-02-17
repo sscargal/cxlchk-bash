@@ -1,26 +1,22 @@
 #!/usr/bin/env bash
 #set -x
-
 # Prevent repeated sourcing
 #STE_STED stands for Software Triggers Enable/Detials 
 if [ -n "${_MODULE_CHECK_DIMM_STE_STED_}" ]; then
   return
 fi
 _MODULE_CHECK_DIMM_STE_STED_="Loaded"
-
 # Validate SoftwareTriggersEnabled == 0 (Disabled) 
 # If enabled create comma separated list of software triggers 
 function optane_check_dimm_software_triggers_enabled_details() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
-
   # Exit the function with INFO message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
     info_msg " Could not process '${FNAME}'. File not found"
     REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
     return
   fi
-
   # Create Associative Array
   declare -A STE_STED  # Key is the DIMM Property value; Value is a list of DIMMs with this Property value
   # Get the DimmID, Property, and Value fields from the input file
@@ -32,7 +28,6 @@ function optane_check_dimm_software_triggers_enabled_details() {
     if [ ${OPT_VERBOSITY} -ge 3 ]; then
       debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
     fi
-
     # Select SoftwareTriggersEnabled data value first 
     if [[ "${Property}" == "SoftwareTriggersEnabled" ]]; then  
      # Check the value
@@ -46,7 +41,6 @@ function optane_check_dimm_software_triggers_enabled_details() {
         STE_STED[${PropertyValue}]+="${DimmID},"             
     fi 
   done <<<  "$(${GREP} -E 'SoftwareTriggersEnabled|SoftwareTriggersEnabledDetails' ${FNAME})" || return 0
-
   # Report details of DIMMS that have SoftwareTriggersEnabled   
   if [ "${ERR_STATE}" = true ]; then
     info_msg "${#STE_STED[@]} software triggers enabled details found!"
@@ -55,7 +49,6 @@ function optane_check_dimm_software_triggers_enabled_details() {
       info_msg "${d} = ${STE_STED}"
     done
   fi
-
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
     echo "${STR_INFO} ${FUNCNAME[0]} : One or more PMem modules have software trigger enabled " 
@@ -64,7 +57,6 @@ function optane_check_dimm_software_triggers_enabled_details() {
      echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have software trigger disabled" 
      REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
   fi
-
 }
 # Call the main function
 optane_check_dimm_software_triggers_enabled_details "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
