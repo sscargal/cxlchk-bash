@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+i#!/usr/bin/env bash
 #set -x
 # Prevent repeated sourcing
 if [ -n "${_MODULE_CHECK_DIMM_PPC_EXTENDED_ADR_ENABLED_}" ]; then
@@ -25,15 +25,15 @@ function optane_check_dimm_ppc_extended_adr_enabled() {
     if [ ${OPT_VERBOSITY} -ge 3 ]; then
       debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
     fi
-    # If it PpcExtendedAdrEnabled != 1 report Err and report the detials    
-    if [[ "${PropertyValue}" -ne "1" ]]; then   # If value is != 0 then mark error and report next value
+    # If PpcExtendedAdrEnabled != 1 report Err and report the detials    
+    if [[ "${PropertyValue}" -ne "1" ]]; then   
         ERR_STATE=true
     fi             
   done <<<  "$(${GREP} -E PpcExtendedAdrEnabled ${FNAME})" || return 0
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_INFO} ${FUNCNAME[0]} : One or more PMem modules have PpcExtendedAdrEnabled disabled " 
-    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
+    echo "${STR_ERROR} ${FUNCNAME[0]} : One or more PMem modules have PpcExtendedAdrEnabled disabled " 
+    REPORT_COUNT_ERROR=$((REPORT_COUNT_ERROR+1))
    else
      echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have PpcExtendedAdrEnabled enabled" 
      REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
