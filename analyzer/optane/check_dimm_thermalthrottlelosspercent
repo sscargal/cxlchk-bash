@@ -33,11 +33,11 @@ function optane_check_dimm_thermalthrottlelosspercent() {
     fi
     # Report PMem Modules with ThermalThrottleLossPercent != "N/A" or > 0
     case ${PropertyValue} in
+      0|"N/A") # PropertyValue is a string - The product doesn't support ThermalThrottleLossPercent 
+	# Nothing to do
+        ;;
       ^[1-9]+$) # PropertyValue is a numer > 0
         ERR_STATE=true 
-        ;;
-      "N/A") # PropertyValue is a string - The product doesn't support ThermalThrottleLossPercent 
-	# Nothing to do
         ;;
       *) # Fall through to error
         ERR_STATE=true
@@ -62,7 +62,7 @@ function optane_check_dimm_thermalthrottlelosspercent() {
     echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules reported ThermalThrottleLossPercent > 0%" 
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
   else
-    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules did not report any ThermalThrottleLossPercent events"
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have zero ThermalThrottleLossPercent events"
     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
   fi
 }
