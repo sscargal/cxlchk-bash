@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#set -x
+# Prevent repeated sourcing
+if [ -n "${_MODULE_CHECK_DIMM_ERROR_INJECTION_ENABLED_}" ]; then
+  return
+fi
+_MODULE_CHECK_DIMM_ERROR_INJECTION_ENABLED_="Loaded"
+# Validate ErroInjectionEnabled != 1
+# If enabled create comma separated list of DIMMS that have ErrorInjectionEnabled
+function optane_check_dimm_error_injection_enabled() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=false # Used for error reporting
+  # Exit the function with INFO message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    info_msg " Could not process '${FNAME}'. File not found"
+    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    return
+  fi
+  # Create Associative Array
+  declare -A ERROR_INJECTION_ENABLED  # Key is the DIMM Property value; Value is a list of DIMMs with this Property value
+  # Get the DimmID, Property, and Value fields from the input file
+  while IFS='|' read -r DimmID Property Value 
+  do
+    DimmID="$(echo ${DimmID})"         # Remove leading and trailing whitespaces
+    Property="$(echo ${Property})" # Remove leading and trailing whitespaces
+    PropertyValue="$(echo ${Value})"   # Remove leading and trailing whitespaces
+    if [ ${OPT_VERBOSITY} -ge 3 ]; then
+      debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
+    fi
+    # check value of ErrorInjectionEnabled
+    if [[ "${PropertyValue}" -ne "0" ]]; then 
+        ERR_STATE=true
+        ERROR_INJECTION_ENABLED[${PropertyValue}]+="${DimmID}," 
+    fi  
+  done <<<  "$(${GREP} ErrorInjectionEnabled ${FNAME})" || return 0
+  # Report details of DIMMS that have ErrorInjectionEnabled  
+  if [ "${ERR_STATE}" = true ]; then
+    info_msg "Error injection enabled DIMMs found!"
+    for d in "${!ERROR_INJECTION_ENABLED[@]}" ; do # Display the full list of DIMMs found
+      ERROR_INJECTION_ENABLED=${ERROR_INJECTION_ENABLED[${d}]::-1} # Strip the last character ',' from the string
+      info_msg "${d} = ${ERROR_INJECTION_ENABLED}"
+    done
+  fi
+  # Return the final PASS/FAIL to the user
+  if [ "${ERR_STATE}" = true ] ; then
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules have error injection enabled " 
+    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+   else
+     echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have error injection disabled" 
+     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+  fi
+}
+# Call the main function
+optane_check_dimm_error_injection_enabled "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
