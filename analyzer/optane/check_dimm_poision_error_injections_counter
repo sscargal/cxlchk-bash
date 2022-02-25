@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+#set -x
+# Prevent repeated sourcing
+#PEIC_PEC stands for PoisonErrorInjectionsCounter & PoisonErrorClearCounter
+if [ -n "${_MODULE_CHECK_DIMM_PEIC_PEC_}" ]; then
+  return
+fi
+_MODULE_CHECK_DIMM_PEIC_PEC_="Loaded"
+# Validate PoisonErrorInjectionsCounter & PoisonErrorClearCounter 
+# If both are zero = pass
+# Both are not zero but same value = Info Msg + Pass
+# Both are not zero and different value = Crit Msg + Fail
+function optane_check_dimm_poision_error_injection_and_clear_counter() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=false # Used for error reporting
+  local PEIC            # Used for storing values of target
+  local PEC             # Used for storing values of target
+  # Exit the function with INFO message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    info_msg " Could not process '${FNAME}'. File not found"
+    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    return
+  fi
+  # Get the DimmID, Property, and Value fields from the input file
+  while IFS='|' read -r DimmID Property Value 
+  do
+    DimmID="$(echo ${DimmID})"         # Remove leading and trailing whitespaces
+    Property="$(echo ${Property})" # Remove leading and trailing whitespaces
+    PropertyValue="$(echo ${Value})"   # Remove leading and trailing whitespaces
+    if [ ${OPT_VERBOSITY} -ge 3 ]; then
+      debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
+    fi
+    # Select PoisonErrorInjectionsCounter data value first 
+    if [[ "${Property}" == "PoisonErrorInjectionsCounter" ]]; then  
+     # Save the value to PEIC 
+      PEIC="${PropertyValue}"
+     # Get property value for PoisonErrorClearCounter and save in PEC
+    elif [[ "${Property}" == "PoisonErrorClearCounter" ]]; then
+      PEC="${PropertyValue}" 
+    # Compare
+    if [[ "${PEIC}" -ne '0' ]]; then
+         if [[ "${PEIC}" -ne "${PEC}" ]]; then
+           ERR_STATE=true
+         else
+           echo "${STR_INFO} ${FUNCNAME[0]} : Dimm ${DimmID} has equal but non zero injected errors and cleared errors "
+         fi        
+      fi
+    fi 
+  done <<<  "$(${GREP} -E 'PoisonErrorInjectionsCounter|PoisonErrorClearCounter' ${FNAME})" || return 0 
+  # Return the final PASS/FAIL to the user
+  if [ "${ERR_STATE}" = true ] ; then
+    echo "${STR_CRIT} ${FUNCNAME[0]} : One or more PMem modules have PoisionErrorInjectionCounter not equal to PoisionErrorCounter " 
+    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+   else
+     echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have equal PosionErrorInjectionCounter and PoisionErrorCounter  " 
+     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+  fi
+}
+# Call the main function
+optane_check_dimm_poision_error_injection_and_clear_counter "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
+
+
