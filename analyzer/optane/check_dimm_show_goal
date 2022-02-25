@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#set -x
+# Prevent repeated sourcing
+if [ -n "${_MODULE_CHECK_DIMM_SHOW_GOAL_}" ]; then
+  return
+fi
+_MODULE_CHECK_DIMM_SHOW_GOAL_="Loaded"
+# Validate overwrite status has defined value Unknown, Not Started, and Completed = INFO msg + PASS
+function optane_check_dimm_show_goal() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=false # Used for error reporting
+  local statement1="There are no goal configs defined in the system."
+  local statement2="Please use 'show -region' to display currently valid persistent memory regions"
+  # Exit the function with INFO message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    info_msg " Could not process '${FNAME}'. File not found"
+    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    return
+  fi
+  result=$(grep "There are no goal configs defined in the system" "${OUTPUT_PATH}/ipmctl_show_-a_-goal") 
+  if [ "${result}" != "${statement1}" ]; then
+    ERR_STATE=true
+  fi
+   
+ 
+  # Return the final PASS/FAIL to the user
+  if [ "${ERR_STATE}" = true ] ; then
+    echo "${STR_FAIL} ${FUNCNAME[0]} : A pending goal configuration exists and will be applied on the next system reboot " 
+    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+   else
+     echo "${STR_PASSED} ${FUNCNAME[0]} : There are no pending goals remaining " 
+     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+  fi
+}
+# Call the main function
+optane_check_dimm_show_goal "${OUTPUT_PATH}/ipmctl_show_-a_-goal"
+
