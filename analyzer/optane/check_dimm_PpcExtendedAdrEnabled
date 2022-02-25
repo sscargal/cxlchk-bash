@@ -1,10 +1,11 @@
-i#!/usr/bin/env bash
+#!/usr/bin/env bash
 #set -x
 # Prevent repeated sourcing
 if [ -n "${_MODULE_CHECK_DIMM_PPC_EXTENDED_ADR_ENABLED_}" ]; then
   return
 fi
 _MODULE_CHECK_DIMM_PPC_EXTENDED_ADR_ENABLED_="Loaded"
+
 # Validate PpcExtendedAdrEnabled == 1
 function optane_check_dimm_ppc_extended_adr_enabled() {
   local FNAME=$1        # File name to process
@@ -20,7 +21,7 @@ function optane_check_dimm_ppc_extended_adr_enabled() {
   while IFS='|' read -r DimmID Property Value 
   do
     DimmID="$(echo ${DimmID})"         # Remove leading and trailing whitespaces
-    Property="$(echo ${Property})" # Remove leading and trailing whitespaces
+    Property="$(echo ${Property})"     # Remove leading and trailing whitespaces
     PropertyValue="$(echo ${Value})"   # Remove leading and trailing whitespaces
     if [ ${OPT_VERBOSITY} -ge 3 ]; then
       debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
@@ -32,11 +33,11 @@ function optane_check_dimm_ppc_extended_adr_enabled() {
   done <<<  "$(${GREP} -E PpcExtendedAdrEnabled ${FNAME})" || return 0
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_ERROR} ${FUNCNAME[0]} : One or more PMem modules have PpcExtendedAdrEnabled disabled " 
-    REPORT_COUNT_ERROR=$((REPORT_COUNT_ERROR+1))
+    echo "${STR_INFO} ${FUNCNAME[0]} : One or more PMem modules have PpcExtendedAdrEnabled=False (Disabled)" 
+    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
    else
-     echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have PpcExtendedAdrEnabled enabled" 
-     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+     echo "${STR_INFO} ${FUNCNAME[0]} : All PMem modules have PpcExtendedAdrEnabled=True (Enabled)" 
+     REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
   fi
 }
 # Call the main function

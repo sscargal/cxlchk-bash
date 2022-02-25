@@ -5,8 +5,9 @@ if [ -n "${_MODULE_CHECK_DIMM_AIT_DRAM_ENABLED_}" ]; then
   return
 fi
 _MODULE_CHECK_DIMM_AIT_DRAM_ENABLED_="Loaded"
+
 # Validate AitDramEnabled == 1
-function optane_check_ait_dram_enabled() {
+function optane_check_dimm_ait_dram_enabled() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
   # Exit the function with INFO message if the file to process doesn't exist
@@ -18,7 +19,7 @@ function optane_check_ait_dram_enabled() {
   while IFS='|' read -r DimmID Property Value 
   do
     DimmID="$(echo ${DimmID})"         # Remove leading and trailing whitespaces
-    Property="$(echo ${Property})" # Remove leading and trailing whitespaces
+    Property="$(echo ${Property})"     # Remove leading and trailing whitespaces
     PropertyValue="$(echo ${Value})"   # Remove leading and trailing whitespaces
     if [ ${OPT_VERBOSITY} -ge 3 ]; then
       debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
@@ -28,14 +29,15 @@ function optane_check_ait_dram_enabled() {
         ERR_STATE=true
     fi             
   done <<<  "$(${GREP} AitDramEnabled ${FNAME})" || return 0
+
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules have AitDramEnabled switch disabled" 
+    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules have AitDramEnabled=False (Disabled)" 
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
    else
-    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have AitDramEnabled switch disenabledabled" 
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have AitDramEnabled=True (Enabled)" 
     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
   fi
 }
 # Call the main function
-optane_check_ait_dram_enabled "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
+optane_check_dimm_ait_dram_enabled "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"

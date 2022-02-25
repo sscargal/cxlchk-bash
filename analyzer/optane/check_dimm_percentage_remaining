@@ -2,13 +2,13 @@
 #set -x
 
 # Prevent repeated sourcing
-if [ -n "${__MODULE_CHECK_PERCENTAGE_REMAINING__}" ]; then
+if [ -n "${__MODULE_CHECK_DIMM_PERCENTAGE_REMAINING__}" ]; then
   return
 fi
-__MODULE_CHECK_PERCENTAGE_REMAINING__="Loaded"
+__MODULE_CHECK_DIMM_PERCENTAGE_REMAINING__="Loaded"
 
 # check percentage remaining 
-function optane_check_percentage_remaining() {
+function optane_check_dimm_percentage_remaining() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
 
@@ -55,5 +55,5 @@ function optane_check_percentage_remaining() {
 }
 
 # Call the main function
-optane_check_percentage_remaining "${OUTPUT_PATH}/ipmctl_show_-sensor"
+optane_check_dimm_percentage_remaining "${OUTPUT_PATH}/ipmctl_show_-sensor"
 
