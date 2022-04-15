@@ -25,8 +25,11 @@ SED=("$(command -v sed)")			# Path to sed
 TPUT=("$(command -v tput)")			# Path to tput
 CP=("$(command -v cp)")				# Path to cp
 FIND=("$(command -v find)")                     # Path to find
+TEE=("$(command -v tee)")                       # Path to tee
+TAIL=("$(command -v tail)")                      # Path to tail
 
 OUTPUT_PATH="./pmemchk.`hostname`.`date +"%m%d-%H%M"`" # output directory created by this script
+STDOUT_LOG_FILE="pmemchk.log"			# Filename to save STDOUT and STDERR
 TERMCOLORS=false				# Use terminal colors or not (default: FALSE)
 
 # Variables for script input options and arguments
@@ -45,13 +48,13 @@ ANALYZER_MODULE_LIST=""				# A user defined list of modules to include or exclud
 trap ctrl_c INT
 function ctrl_c() {
   echo "INFO: Received CTRL+C - aborting"
-  display_test_end_info
+  display_end_info
   popd &> /dev/null
   exit 1
 }
 
 # Display test start information
-function display_test_start_info() {
+function display_start_info() {
   START_TIME=$(date +%s)
   echo "======================================================================="
   echo "Starting PMem Checker"
@@ -61,14 +64,15 @@ function display_test_start_info() {
 }
 
 # Display test end information
-function display_test_end_info() {
+function display_end_info() {
   END_TIME=$(date +%s)
   TEST_DURATION=$((${END_TIME}-${START_TIME}))
   echo "======================================================================="
   echo "PMem Checker Complete"
   echo "Ended: $(date --date @${END_TIME})"
   echo "Duration: ${TEST_DURATION} seconds"
-  echo "Results: $OUTPUT_PATH"
+  echo "Results: ${OUTPUT_PATH}"
+  echo "Logfile: ${LOG_FILE}"
   echo "======================================================================="
 }
 
@@ -76,14 +80,14 @@ function display_test_end_info() {
 function verify_os(){
   if [[ $(uname) != "Linux" ]]; then
     echo "[Error] This script is supported on Linux only. You have $(uname). Exiting."
-    display_test_end_info
+    display_end_info
     popd &> /dev/null
     exit 1
   fi
 
   if [[ $(uname -m) != "x86_64" ]]; then
     echo "[Error] This script is supported on x86_64 only. You have $(uname -m). Exiting."
-    display_test_end_info
+    display_end_info
     popd &> /dev/null
     exit 1
   fi
@@ -121,7 +125,7 @@ function verify_cmds() {
     echo "CXL version: $(${CXLCLI} version)"
   fi
 
-  for CMD in awk sed numactl lscpu grep egrep mount wc mountpoint cut bc cp find; do
+  for CMD in awk sed numactl lscpu grep egrep mount wc mountpoint cut bc cp find tee; do
    CMD_PATH=($(command -v ${CMD}))
    if [ ! -x "${CMD_PATH}" ]; then
      echo "ERROR: ${CMD} command not found! Please install the ${CMD} package."
@@ -183,7 +187,7 @@ function display_usage() {
   echo " "
   echo "   -n <Path to NDCTL executable>"
   echo "      Specify the path to the NDCTL executable"
-  echo " " 
+  echo " "
   echo "   -v"
   echo "      Print verbose output. Use -v, -vv, and -vvv to increase verbosity."
   exit 0
@@ -365,6 +369,36 @@ function list_analyzer_rules() {
   echo ""
 }
 
+# Save STDOUT and STDERR to a log file
+# arg1 = path to log file. If empty, save to current directory
+function log_stdout_stderr {
+  local LOG_PATH
+  if [[ $1 != "" ]]; then 
+    # Use the specified path
+    LOG_PATH=${1}
+  else
+    # Use current working directory
+    LOG_PATH=$(pwd)
+  fi
+  LOG_FILE="${LOG_PATH}/${STDOUT_LOG_FILE}"
+  # Capture STDOUT and STDERR to a log file, and display to the terminal
+  if [[ ${TEE} != "" ]]; then
+    # Use the tee approach
+    exec &> >(${TEE} -a "${LOG_FILE}")
+  else
+    # Use the tail approach
+    exec &> "${LOG_FILE}" && ${TAIL} "${LOG_FILE}"
+  fi
+}
+
+# Initialization
+function _init {
+  # Call internal functions
+  sysinfo
+  verify_cmds
+  verify_os
+}
+
 #################################################################################################
 # Main
 #################################################################################################
@@ -378,14 +412,10 @@ fi
 # Add the current working directory to $PATH
 pushd $PWD &> /dev/null
 
-# Display the header information
-display_test_start_info
-
-# Call internal functions to initialize and verify the environment
+#  Process command arguments
 process_args "$@"
-verify_cmds
-verify_os
-sysinfo
+
+# Detect Terminal Type
 auto_detect_terminal_colors
 
 # Source common functions
@@ -394,7 +424,24 @@ auto_detect_terminal_colors
 # If not processing a previously collected dataset, run the data collector on the local machine 
 if [[ "${OPT_A}" = false ]] ; then 
   init_outputs 		# Initialize the data collection directory
-  . collector/collector # Run the collector module
+
+  # Save STDOUT and STDERR logs to the data collection directory
+  log_stdout_stderr "${OUTPUT_PATH}"
+
+  # Display the header information
+  display_start_info
+
+  # Initialize
+  _init
+
+  # Run the collector module
+  . collector/collector 
+else
+  # Save STDOUT and STDERR logs to the current directory
+  log_stdout_stderr "$(pwd)"
+
+  # Display the header information
+  display_start_info
 fi
 
 # Run the analysis modules on the collected data 
@@ -406,7 +453,7 @@ fi
 # TODO
 
 # Display the end header information
-display_test_end_info
+display_end_info
 
 # Remove the current directory from $PATH 
 popd &> /dev/null
