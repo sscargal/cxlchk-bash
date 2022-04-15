@@ -2,7 +2,7 @@
 
 # set -e: exits if a command fails
 # set -u: errors if an variable is referenced before being set
-set -e
+# set -e
 
 #################################################################################################
 # Global Variables 
@@ -114,7 +114,7 @@ function verify_cmds() {
 
   # cxl is optional and only available in NDCTL version 72 or later
   if [ ! -x "${CXLCLI}" ]; then
-    echo "ERROR: cxl command not found! Use -c to specify the location."
+    echo "INFO: cxl command not found! Use -c to specify the location."
     err_state=false 
   else
     echo "Using CXL command: ${CXLCLI}"
