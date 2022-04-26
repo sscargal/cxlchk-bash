@@ -13,6 +13,7 @@ VERSION="0.1.0"					# version string
 SCRIPT_NAME=${0##*/}				# Name of this script
 
 NDCTL=("$(command -v ndctl)")                   # Path to ndctl, use -n option to specify location of the ndctl binary 
+DAXCTL=("$(command -v daxctl)")                 # Path to daxctl
 IPMCTL=("$(command -v ipmctl)")                 # Path to ipmctl, use -i option to specify the location of the ipmctl binary 
 CXLCLI=("$(command -v cxl)")			# Path to cxl, use -c option to specify the location of the cxl binary
 BC=("$(command -v bc)")				# Path to bc
@@ -26,7 +27,7 @@ TPUT=("$(command -v tput)")			# Path to tput
 CP=("$(command -v cp)")				# Path to cp
 FIND=("$(command -v find)")                     # Path to find
 TEE=("$(command -v tee)")                       # Path to tee
-TAIL=("$(command -v tail)")                      # Path to tail
+TAIL=("$(command -v tail)")                     # Path to tail
 
 OUTPUT_PATH="./pmemchk.`hostname`.`date +"%m%d-%H%M"`" # output directory created by this script
 STDOUT_LOG_FILE="pmemchk.log"			# Filename to save STDOUT and STDERR
