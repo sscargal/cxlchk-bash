@@ -1,0 +1,61 @@
+#!/usr/bin/env bash 
+
+#################################################################################################
+# daxctl collector
+#################################################################################################
+
+function daxctl_collector() {
+  echo "Running DAXCTL Collector"
+
+  if [ "${OPT_VERBOSITY}" -ge 1 ]; then
+    debug_msg "Using ${DAXCTL}"
+  fi
+
+  IFS="" #Change the delimiter to prevent Bash separating elements by spaces
+  daxctl_args=(
+    "version"
+    "list --devices"
+    "list --idle"
+    "list --regions"
+    "list --regions --idle"
+  )
+
+  # Initialize the progress bar
+  init_progressbar "${#daxctl_args[@]}"
+
+  for arg in "${daxctl_args[@]}"; do
+    # Provide progress to user
+    inc_progressbar
+
+    # Create output files
+    # Replace spaces in the command and agrs to be used as the output file name
+    OFNAME="daxctl ${arg}"
+    OFNAME="${OFNAME// /_}" # Use the Bash string replace feature rather than calling sed or awk
+    CMD_OUTPUT_FILE="${OUTPUT_PATH}/${OFNAME}"
+    CMD_ERR_OUTPUT_FILE="${OUTPUT_PATH}/${OFNAME}.err"
+    # Run the daxctl command with arguments
+    # Redirect errors to the error file
+    if eval "${DAXCTL} ${arg}" 2> "${CMD_ERR_OUTPUT_FILE}" 1> "${CMD_OUTPUT_FILE}" ; then
+      if [ "${OPT_VERBOSITY}" -ge 1 ]; then
+        debug_msg "${DAXCTL} ${arg} Command ${green}succeeded${normal}"
+      fi
+    else
+      if [ "${OPT_VERBOSITY}" -ge 1 ]; then
+        debug_msg "${DAXCTL} ${arg} Command ${red}failed${normal}"
+      fi
+    fi
+  done
+  echo ""
+}
+
+#################################################################################################
+# Main
+#################################################################################################
+
+# Run the daxctl collector module if the 'daxctl' command was found
+# Test if the $DAXCTL variable is set and is not-empty
+if [[ ! -z "${DAXCTL}" ]]; then 
+  daxctl_collector
+else 
+  echo "Skipping DAXCTL collector. 'daxctl' command not found"
+fi
