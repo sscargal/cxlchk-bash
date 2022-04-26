@@ -117,6 +117,17 @@ function verify_cmds() {
     echo "IPMCTL version: ${IPMCTL_VER}"
   fi
 
+  # daxctl is optional
+  if [ ! -x "${DAXCTL}" ]; then
+    echo "ERROR: daxctl command not found!" 
+    err_state=false
+  else
+    echo "Using DAXCTL command: ${DAXCTL}"
+    TOKENS=( $(${DAXCTL} version 2>&1 ) )
+    DAXCTL_VER=${TOKENS[-1]}
+    echo "DAXCTL version: ${DAXCTL_VER}"
+  fi
+
   # cxl is optional and only available in NDCTL version 72 or later
   if [ ! -x "${CXLCLI}" ]; then
     echo "INFO: cxl command not found! Use -c to specify the location."
