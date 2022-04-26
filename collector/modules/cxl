@@ -1,3 +1,5 @@
+#!/usr/bin/env bash 
+
 #################################################################################################
 # cxl collector
 #################################################################################################
@@ -48,4 +50,10 @@ function cxl_collector() {
 # Main
 #################################################################################################
 
-cxl_collector
+# Run the cxl collector module if the 'cxl' command was found
+# Test if the $CXLCLI variable is set and is not-empty
+if [[ ! -z "${CXLCLI}" ]]; then
+  cxl_collector
+else
+  echo "Skipping CXL collector. 'cxl' command not found"
+fi
