@@ -1,0 +1,143 @@
+#################################################################################################
+# ipmctl collector
+#################################################################################################
+
+function ipmctl_collector() {
+  echo "Running IPMCTL Collector"
+
+  if [ ${OPT_VERBOSITY} -ge 1 ]; then
+    debug_msg "Using ${IPMCTL}"
+  fi
+
+  IFS="" #Change the delimiter to prevent Bash separating elements by spaces
+  ipmctl_args=(
+    "version"
+    "show -topology"
+    "show -a -topology"
+    "show -socket"
+    "show -a -socket"
+    "show -dimm"
+    "show -a -dimm"
+    "show -memoryresources"
+    "show -goal"
+    "show -a -goal"
+    "show -system"
+    "show -system NFIT"
+    "show -system PCAT"
+    "show -system PMTT"
+    "show -system -capabilities"
+    "show -a -system -capabilities"
+    "show -region"
+    "show -a -region"
+    "show -firmware"
+    "show -a -firmware"
+    "show -preferences"
+    "show -cel"
+    "show -performance"
+    "show -sensor"
+    "show -error Media"
+    "show -a -error Media"
+    "show -error Thermal"
+    "show -a -error Thermal"
+    "show -pcd"
+    "show -pcd Config"
+    "show -pcd LSA"
+    "show -cel"
+  )
+
+  # Initialize the progress bar
+  init_progressbar "${#ipmctl_args[@]}"
+
+  for arg in ${ipmctl_args[@]}; do
+    # Provide progress to user
+    inc_progressbar
+
+    # Create output files
+    # Replace spaces in the command and agrs to be used as the output file name
+    OFNAME="ipmctl ${arg}"
+    OFNAME="${OFNAME// /_}" # Use the Bash string replace feature rather than calling sed or awk
+    CMD_OUTPUT_FILE="${OUTPUT_PATH}/${OFNAME}"
+    CMD_ERR_OUTPUT_FILE="${OUTPUT_PATH}/${OFNAME}.err"
+    # Run the ipmctl command with arguments
+    # Redirect errors to the error file
+    if eval "${IPMCTL} ${arg}" 2> ${CMD_ERR_OUTPUT_FILE} 1> ${CMD_OUTPUT_FILE} ; then
+      if [ ${OPT_VERBOSITY} -ge 1 ]; then
+        debug_msg "${IPMCTL} ${arg} Command ${green}succeeded${normal}"
+      fi
+    else
+      if [ ${OPT_VERBOSITY} -ge 1 ]; then
+        debug_msg "${IPMCTL} ${arg} Command ${red}failed${normal}"
+      fi
+    fi
+  done
+  echo ""
+}
+
+#################################################################################################
+# Post-Process Data Functions
+#################################################################################################
+
+# Reformat the `ipmctl` output from the collected data in to easily parsable data (columnar)
+function reformat_ipmctl-a_file() {
+  local FNAME=$1        # File name to process
+
+  # AWK rules explanation
+  #
+  # Change the Output Field Separator to the '|' symbol
+  # BEGIN {OFS="|"}
+  #
+  # For all rows that do not begin with '---', remove all leading and trailing white spaces, then print the HdrValue and Fields 1 and 2, then move to the next row
+  # Performing this row first avoids unnecessary test conditions if we were to place this rule later in the order
+  # $0 !~ /^---/ {gsub(/^[ \t]+|[ \t]+$/, "", $0);print HdrValue,$1,$2; next}
+  #
+  # For rows that begin with '---', replace '---' with blanks, then set HdrStr to Field 1 and HdrValue to Field 2
+  # $0 ~ /^---/ {gsub(/\-/, "", $0); HdrStr=$1; HdrValue=$2;}
+  #
+  # Print the output Header if processing the first row in the input file
+  # NR == 1 {print HdrStr"|Property|Value";}
+  #
+  # The results are saved to a *.psv (Pipe Separated Value) file
+  ${AWK} -F '[=]' 'BEGIN {OFS="|"}
+    $0 !~ /^---/ {gsub(/^[ \t]+|[ \t]+$/, "", $0);print HdrValue,$1,$2; next}
+    $0 ~ /^---/ {gsub(/\-/, "", $0); HdrStr=$1; HdrValue=$2;}
+    NR == 1 {print HdrStr"|Property|Value";}
+  ' ${FNAME} > ${FNAME}.psv
+}
+
+function reformat_ipmctl-a_files() {
+  echo "Post-Processing Collected Data"
+  IFS="" #Change the delimiter to prevent Bash separating elements by spaces
+  ipmctl_a_files=(
+    ipmctl_show_-a_-dimm
+    ipmctl_show_-a_-firmware
+    ipmctl_show_-a_-region
+    ipmctl_show_-a_-socket
+    ipmctl_show_-a_-topology
+  )
+
+  # Initialize the progress bar
+  init_progressbar "${#ipmctl_a_files[@]}"
+
+  # Process each file in the list
+  for file in ${ipmctl_a_files[@]}; do
+    file="${OUTPUT_PATH}/${file}"
+    # Verify the file exists
+    if [[ -f "${file}" ]] ; then
+      # Provide progress to user
+      inc_progressbar
+
+      reformat_ipmctl-a_file "${file}"
+    fi
+  done
+
+  echo ""
+  unset IFS
+}
+
+#################################################################################################
+# Main
+#################################################################################################
+
+ipmctl_collector
+reformat_ipmctl-a_files
+

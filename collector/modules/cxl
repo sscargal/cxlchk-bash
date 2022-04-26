@@ -1,0 +1,51 @@
+#################################################################################################
+# cxl collector
+#################################################################################################
+
+function cxl_collector() {
+  echo "Running CXL Collector"
+
+  if [ ${OPT_VERBOSITY} -ge 1 ]; then
+    debug_msg "Using ${CXLCLI}"
+  fi
+
+  IFS="" #Change the delimiter to prevent Bash separating elements by spaces
+  cxl_args=(
+    "version"
+    "list --memdevs --health"
+    "list --memdevs --health --idle"
+  )
+
+  # Initialize the progress bar
+  init_progressbar "${#cxl_args[@]}"
+
+  for arg in ${cxl_args[@]}; do
+    # Provide progress to user
+    inc_progressbar
+
+    # Create output files
+    # Replace spaces in the command and agrs to be used as the output file name
+    OFNAME="cxl ${arg}"
+    OFNAME="${OFNAME// /_}" # Use the Bash string replace feature rather than calling sed or awk
+    CMD_OUTPUT_FILE="${OUTPUT_PATH}/${OFNAME}"
+    CMD_ERR_OUTPUT_FILE="${OUTPUT_PATH}/${OFNAME}.err"
+    # Run the cxl command with arguments
+    # Redirect errors to the error file
+    if eval "${CXLCLI} ${arg}" 2> ${CMD_ERR_OUTPUT_FILE} 1> ${CMD_OUTPUT_FILE} ; then
+      if [ ${OPT_VERBOSITY} -ge 1 ]; then
+        debug_msg "${CXLCLI} ${arg} Command ${green}succeeded${normal}"
+      fi
+    else
+      if [ ${OPT_VERBOSITY} -ge 1 ]; then
+        debug_msg "${CXLCLI} ${arg} Command ${red}failed${normal}"
+      fi
+    fi
+  done
+  echo ""
+}
+
+#################################################################################################
+# Main
+#################################################################################################
+
+cxl_collector
