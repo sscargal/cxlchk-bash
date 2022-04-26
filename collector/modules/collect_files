@@ -1,0 +1,42 @@
+#################################################################################################
+# Collect files from the target system
+#################################################################################################
+
+function collect_files() {
+  echo "Collecting files"
+
+  IFS="" #Change the delimiter to prevent Bash separating elements by spaces
+  files_to_collect=(
+    "/var/log/messages"
+  )
+
+  # Initialize the progress bar
+  init_progressbar "${#files_to_collect[@]}"
+
+  for file in ${files_to_collect[@]}; do
+    # Provide progress to user
+    inc_progressbar
+
+    if [ ${OPT_VERBOSITY} -ge 2 ]; then
+      debug_msg "Collecting ${file}"
+    fi
+    if [[ -f "${file}" ]] ; then # Copy files that exist
+      if ${CP} ${file} ${OUTPUT_PATH} 2> ${OUTPUT_PATH}/cp.err ; then
+        if [ ${OPT_VERBOSITY} -ge 1 ]; then
+          debug_msg "${CP} ${file} ${OUTPUT_PATH} Command ${green}succeeded${normal}"
+        fi
+      else
+        if [ ${OPT_VERBOSITY} -ge 1 ]; then
+          debug_msg "${CP} ${file} ${OUTPUT_PATH} Command ${red}failed${normal}"
+        fi
+      fi
+    fi
+  done
+  echo ""
+}
+
+#################################################################################################
+# Main
+#################################################################################################
+
+collect_files

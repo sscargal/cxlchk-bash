@@ -1,0 +1,49 @@
+#################################################################################################
+# Execute commands to collect data
+#################################################################################################
+
+function collect_cmds() {
+  echo "Collecting command outputs"
+
+  IFS="" #Change the delimiter to prevent Bash separating elements by spaces
+  commands_to_collect=(
+    "dmidecode"
+    "lscpu"
+  )
+
+  # Initialize the progress bar
+  init_progressbar "${#commands_to_collect[@]}"
+
+  for cmd in ${commands_to_collect[@]}; do
+    # Provide progress to user
+    inc_progressbar
+
+    if [ ${OPT_VERBOSITY} -ge 2 ]; then
+      debug_msg "Collecting ${cmd}"
+    fi
+    # Create output files
+    # Replace spaces in the command and agrs to be used as the output file name
+    OFNAME="${cmd}"
+    OFNAME="${OFNAME// /_}" # Use the Bash string replace feature rather than calling sed or awk
+    CMD_OUTPUT_FILE="${OUTPUT_PATH}/${OFNAME}"
+    CMD_ERR_OUTPUT_FILE="${OUTPUT_PATH}/${OFNAME}.err"
+    # Run the command with arguments
+    # Redirect errors to the error file
+    if eval "${cmd}" 2> ${CMD_ERR_OUTPUT_FILE} 1> ${CMD_OUTPUT_FILE} ; then
+      if [ ${OPT_VERBOSITY} -ge 1 ]; then
+        debug_msg "${cmd} Command ${green}succeeded${normal}"
+      fi
+    else
+      if [ ${OPT_VERBOSITY} -ge 1 ]; then
+        debug_msg "${cmd} Command ${red}failed${normal}"
+      fi
+    fi
+  done
+  echo ""
+}
+
+#################################################################################################
+# Main
+#################################################################################################
+
+collect_cmds
