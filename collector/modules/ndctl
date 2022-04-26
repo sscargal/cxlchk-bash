@@ -53,4 +53,10 @@ function ndctl_collector() {
 # Main
 #################################################################################################
 
-ndctl_collector
+# Run the ndctl collector module if the 'ndctl' command was found
+# Test if the $NDCTL variable is set and is not-empty
+if [[ ! -z "${NDCTL}" ]]; then
+  ndctl_collector
+else
+  echo "Skipping NDCTL collector. 'ndctl' command not found"
+fi

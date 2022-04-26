@@ -138,6 +138,12 @@ function reformat_ipmctl-a_files() {
 # Main
 #################################################################################################
 
-ipmctl_collector
-reformat_ipmctl-a_files
+# Run the ipmctl collector module if the 'ipmctl' command was found
+# Test if the $IPMCTL variable is set and is not-empty
+if [[ ! -z "${IPMCTL}" ]]; then
+  ipmctl_collector
+  reformat_ipmctl-a_files
+else
+  echo "Skipping IPMCTL collector. 'ipmctl' command not found"
+fi
 
