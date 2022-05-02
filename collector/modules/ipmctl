@@ -1,11 +1,17 @@
+#!/usr/bin/env bash 
+# set -x
 #################################################################################################
 # ipmctl collector
 #################################################################################################
 
 function ipmctl_collector() {
+  local verbose_cmd_opt=""	# To use or not use '-v' to gather verbose/debug logs on failure 
+  local execute_cmd=""		# Run this command
+  local cmd_retval=0		# Return value of the executed command
+
   echo "Running IPMCTL Collector"
 
-  if [ ${OPT_VERBOSITY} -ge 1 ]; then
+  if [ "${OPT_VERBOSITY}" -ge 1 ]; then
     debug_msg "Using ${IPMCTL}"
   fi
 
@@ -48,7 +54,7 @@ function ipmctl_collector() {
   # Initialize the progress bar
   init_progressbar "${#ipmctl_args[@]}"
 
-  for arg in ${ipmctl_args[@]}; do
+  for arg in "${ipmctl_args[@]}"; do
     # Provide progress to user
     inc_progressbar
 
@@ -60,14 +66,35 @@ function ipmctl_collector() {
     CMD_ERR_OUTPUT_FILE="${OUTPUT_PATH}/${OFNAME}.err"
     # Run the ipmctl command with arguments
     # Redirect errors to the error file
-    if eval "${IPMCTL} ${arg}" 2> ${CMD_ERR_OUTPUT_FILE} 1> ${CMD_OUTPUT_FILE} ; then
-      if [ ${OPT_VERBOSITY} -ge 1 ]; then
+    eval "${IPMCTL} ${arg}" 2> ${CMD_ERR_OUTPUT_FILE} 1> ${CMD_OUTPUT_FILE}
+    cmd_retval=$?
+
+    #if eval "${IPMCTL} ${arg}" 2> ${CMD_ERR_OUTPUT_FILE} 1> ${CMD_OUTPUT_FILE} ; then
+    if [[ ${cmd_retval} -eq 0 ]]; then 
+      if [ "${OPT_VERBOSITY}" -ge 1 ]; then
         debug_msg "${IPMCTL} ${arg} Command ${green}succeeded${normal}"
       fi
     else
-      if [ ${OPT_VERBOSITY} -ge 1 ]; then
-        debug_msg "${IPMCTL} ${arg} Command ${red}failed${normal}"
+      # Add a '-v' after the command using Bash string substitution
+      # Find the first _space_ and substitute it with '-v'
+      #arg=${arg/show/show -v}
+      arg=${arg/ / -v }
+
+
+      if [ "${OPT_VERBOSITY}" -ge 1 ]; then
+        debug_msg "${IPMCTL} ${arg} Command ${red}failed${normal} with return value ${cmd_retval}"
+        debug_msg " Re-Execute command with '-v' option: ${IPMCTL} ${arg}"
       fi
+
+      # Create output files
+      # Replace spaces in the command and agrs to be used as the output file name
+      OFNAME="ipmctl ${arg}"
+      OFNAME="${OFNAME// /_}" # Use the Bash string replace feature rather than calling sed or awk
+      CMD_OUTPUT_FILE="${OUTPUT_PATH}/${OFNAME}"
+      CMD_ERR_OUTPUT_FILE="${OUTPUT_PATH}/${OFNAME}.err"
+
+      # Re-run the command with the '-v' option
+      eval "${IPMCTL} ${arg}" 2> ${CMD_ERR_OUTPUT_FILE} 1> ${CMD_OUTPUT_FILE}
     fi
   done
   echo ""
@@ -101,7 +128,7 @@ function reformat_ipmctl-a_file() {
     $0 !~ /^---/ {gsub(/^[ \t]+|[ \t]+$/, "", $0);print HdrValue,$1,$2; next}
     $0 ~ /^---/ {gsub(/\-/, "", $0); HdrStr=$1; HdrValue=$2;}
     NR == 1 {print HdrStr"|Property|Value";}
-  ' ${FNAME} > ${FNAME}.psv
+  ' "${FNAME}" > "${FNAME}.psv"
 }
 
 function reformat_ipmctl-a_files() {
@@ -119,7 +146,7 @@ function reformat_ipmctl-a_files() {
   init_progressbar "${#ipmctl_a_files[@]}"
 
   # Process each file in the list
-  for file in ${ipmctl_a_files[@]}; do
+  for file in "${ipmctl_a_files[@]}"; do
     file="${OUTPUT_PATH}/${file}"
     # Verify the file exists
     if [[ -f "${file}" ]] ; then
@@ -140,10 +167,10 @@ function reformat_ipmctl-a_files() {
 
 # Run the ipmctl collector module if the 'ipmctl' command was found
 # Test if the $IPMCTL variable is set and is not-empty
-if [[ ! -z "${IPMCTL}" ]]; then
+if [[ -n "${IPMCTL}" ]]; then
   ipmctl_collector
   reformat_ipmctl-a_files
 else
   echo "Skipping IPMCTL collector. 'ipmctl' command not found"
 fi
-
+# set +x # disable verbose output
