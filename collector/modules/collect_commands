@@ -7,8 +7,16 @@ function collect_cmds() {
 
   IFS="" #Change the delimiter to prevent Bash separating elements by spaces
   commands_to_collect=(
+    "df"
+    "df -h"
+    "dmesg -T"
     "dmidecode"
+    "free -m"
     "lscpu"
+    "lsmem"
+    "lsmem -a -o RANGE,SIZE,STATE,REMOVABLE,ZONES,NODE,BLOCK"
+    "lsmod"
+    "mount -v"
   )
 
   # Initialize the progress bar
