@@ -8,6 +8,10 @@ function collect_files() {
   IFS="" #Change the delimiter to prevent Bash separating elements by spaces
   files_to_collect=(
     "/var/log/messages"
+    "/proc/iomem"
+    "/proc/cmdline"
+    "/proc/meminfo"
+    "/proc/modules"
   )
 
   # Initialize the progress bar
