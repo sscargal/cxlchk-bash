@@ -7,7 +7,7 @@ if [ -n "${__MODULE_CHECK_DIMM_MANAGEABILITYSTATE_}" ]; then
 fi
 __MODULE_CHECK_MANAGEABILITYSTATE_="Loaded"
 
-# This should be 'Validate DIMM Manageability State = Managable
+# Validate DIMM Manageability State = Managable
 function optane_check_dimm_manageabilitystate() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
@@ -32,7 +32,7 @@ function optane_check_dimm_manageabilitystate() {
       debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
     fi
     # Report PMem Modules that have Manageability State = Managable 
-    if [[ "${PropertyValue}" -ne "Manageable" ]]; then
+    if [[ "${PropertyValue}" != "Manageable" ]]; then
       ERR_STATE=true
     fi
     # Add the DIMM to the associative array 
