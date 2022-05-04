@@ -5,6 +5,7 @@ if [ -n "${_MODULE_CHECK_DIMM_OVERWRITE_STATUS_}" ]; then
   return
 fi
 _MODULE_CHECK_DIMM_OVERWRITE_STATUS_="Loaded"
+
 # Validate overwrite status has defined value Unknown, Not Started, and Completed = INFO msg + PASS
 function optane_check_dimm_overwrite_status() {
   local FNAME=$1        # File name to process
@@ -16,44 +17,48 @@ function optane_check_dimm_overwrite_status() {
     REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
     return
   fi
+
   declare -A OVERWRITE_STATUS
   # Get the DimmID, Property, and Value fields from the input file
   while IFS='|' read -r DimmID Property Value 
   do
     DimmID="$(echo ${DimmID})"         # Remove leading and trailing whitespaces
-    Property="$(echo ${Property})" # Remove leading and trailing whitespaces
+    Property="$(echo ${Property})"     # Remove leading and trailing whitespaces
     PropertyValue="$(echo ${Value})"   # Remove leading and trailing whitespaces
     if [ ${OPT_VERBOSITY} -ge 3 ]; then
       debug_msg "DimmID ${DimmID}: ${Property}=${Value}"
     fi
     # Select overwrite status 
     if [[ "${Property}" == "OverwriteStatus" ]]; then  
-      if [[ "${PropertyValue}" == "Unknown" ]] || [[ "${PropertyValue}" == "Not Started" ]] || [[ "${PropertyValue}" == "Completed" ]]; then
+      if [[ "${PropertyValue}" == "Not Started" ]] || [[ "${PropertyValue}" == "In progress" ]]; then
+	ERR_STATE=true
         OVERWRITE_STATUS[${PropertyValue}]+="${DimmID},"
-      elif [[ "${PropertyValue}" == "In progress" ]]; then
-        ERR_STATE=true
+      elif [[ "${PropertyValue}" == "Completed" ]] || [[ "${PropertyValue}" == "Unknown" ]]; then
         OVERWRITE_STATUS[${PropertyValue}]+="${DimmID},"
       fi 
     fi
   done <<<  "$(${GREP} OverwriteStatus ${FNAME})" || return 0 
   
-  # Report details of DIMMS that have BootStatus != Success
-  if [ "${OVERWRITE_STATUS}" = true ]; then
-    info_msg "${#OVERWRITE_STATUS[@]} Dimms with In Progress Overwrite Status found!"
+  # Report details of the Overwrite status for all modules
+  if [ "${#OVERWRITE_STATUS}" -ge 0 ]; then
+    info_msg "${#OVERWRITE_STATUS[@]} Overwrite Status found:"
     for d in "${!OVERWRITE_STATUS[@]}" ; do # Display the full list of DIMMs found
       OVERWRITE_STATUS=${OVERWRITE_STATUS[${d}]::-1} # Strip the last character ',' from the string
       info_msg "${d} = ${OVERWRITE_STATUS}"
     done
+  else # No entries were found in the array so return without doing anything
+    return 0
   fi
   
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_WARN} ${FUNCNAME[0]} : One or more PMem modules have Overwrite Status set to In Progress " 
+    echo "${STR_WARN} ${FUNCNAME[0]} : One or more PMem modules have Overwrite Status != 'Completed' or 'Unknown'" 
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
-   else
-     echo "${STR_INFO} ${FUNCNAME[0]} : All PMem modules have a definite OverwriteStatus" 
-     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+  else
+    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have Overwrite Status == '${!OVERWRITE_STATUS[@]}'" 
+    REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
   fi
 }
+
 # Call the main function
 optane_check_dimm_overwrite_status "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
