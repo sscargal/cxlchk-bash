@@ -8,7 +8,7 @@ fi
 _MODULE_CHECK_FW_ERROR_COUNT_="Loaded"
 
 # check Firmware Error Count
-function optane_dimm_check_fw_error_count() {
+function optane_check_dimm_fw_error_count() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
 
@@ -54,4 +54,4 @@ function optane_dimm_check_fw_error_count() {
 }
 
 # Call the main function
-optane_dimm_check_fw_error_count "${OUTPUT_PATH}/ipmctl_show_-sensor"
+optane_check_dimm_fw_error_count "${OUTPUT_PATH}/ipmctl_show_-sensor"
