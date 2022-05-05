@@ -293,6 +293,7 @@ function setup_strings() {
     STR_INFO="${magenta}[ INFO     ]${normal}"
     STR_DEBUG="${cyan}[ DEBUG    ]${normal}"
     STR_CRIT="${red}[ CRITICAL ]${normal}"
+    STR_SKIPPED="${blue}[ SKIPPED  ]${normal}"
   else
     STR_PASSED="[ PASSED   ]"
     STR_WARN="[ WARNING  ]"
@@ -300,6 +301,7 @@ function setup_strings() {
     STR_INFO="[ INFO     ]"
     STR_DEBUG="[ DEBUG    ]"
     STR_CRIT="[ CRITICAL ]"
+    STR_SKIPPED="[ SKIPPED  ]"
   fi
 }
 
