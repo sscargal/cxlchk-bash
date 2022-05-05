@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# set -x
+# Prevent repeated sourcing
+if [ -n "${_MODULE_CHECK_FULL_FILE_SYSTEMS_}" ]; then
+  return
+fi
+_MODULE_CHECK_FULL_FILE_SYSTEMS_="Loaded"
+
+# Report full or near full file systems 
+function linux_check_full_file_systems() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=""    # Used for error reporting
+
+  # Exit the function with INFO message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    info_msg " Could not process '${FNAME}'. File not found"
+    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    return
+  fi
+
+  # Read each entry of 'df -h', skipping the header
+  while read -r Filesystem Size Used Avail UsedPct MountedOn
+  do
+    Filesystem="$(echo ${Filesystem})"  # Remove leading and trailing whitespaces
+    Size="$(echo ${Size})"     		# Remove leading and trailing whitespaces
+    Used="$(echo ${Used})"   		# Remove leading and trailing whitespaces
+    Avail="$(echo ${Avail})"   		# Remove leading and trailing whitespaces
+    UsedPct="$(echo ${UsedPct::-1})"    # Remove leading and trailing whitespaces, and strip the trailing % symbol
+    MountedOn="$(echo ${MountedOn})"   	# Remove leading and trailing whitespaces
+    if [ "${OPT_VERBOSITY}" -ge 3 ]; then
+      debug_msg "${Filesystem} ${Size} ${Used} ${Avail} ${UsedPct} ${MountedOn}"
+    fi
+    # Report when UsedPct > 75%, 85%, and 95% 
+    if [[ "${UsedPct}" -ge 95 ]]; then 
+      info_msg "${MountedOn} is '${UsedPct}%' full. This may impact performance!"
+      ERR_STATE="FAIL"
+    elif [[ "${UsedPct}" -ge 85 ]]; then
+      info_msg "${MountedOn} is '${UsedPct}%' full. Consider clearing out space or growing the file system capacity."
+      if [[ -z ${ERR_STATE} ]]; then 
+        ERR_STATE="WARN"
+      fi
+    elif [[ "${UsedPct}" -ge 75 ]]; then
+      info_msg "${MountedOn} is '${UsedPct}%' full."
+      if [[ -z ${ERR_STATE} ]]; then
+        ERR_STATE="INFO"
+      fi
+    fi             
+  done <<< "$(tail -n +1 ${FNAME})" || return 0
+
+  # Return the final PASS/WARN/INFO/FAIL to the user
+  case "${ERR_STATE}" in 
+    "FAIL")
+      echo "${STR_FAIL} ${FUNCNAME[0]} : One or more file systems are >=95% full. See previous errors."
+      REPORT_COUNT_FAIL=$((REPORT_COUNT_FAIL+1)) 
+      ;;
+    "WARN")
+      echo "${STR_WARN} ${FUNCNAME[0]} : One or more file systems are >=85% full. See previous errors."
+      REPORT_COUNT_WARNINGS=$((REPORT_COUNT_WARNINGS+1)) 
+      ;;
+    "INFO")
+      echo "${STR_INFO} ${FUNCNAME[0]} : One or more file systems are >=75% full. See previous errors."
+      REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) 
+      ;;
+    *)
+      echo "${STR_PASSED} ${FUNCNAME[0]} : All file systems are <75% full."
+      REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+      ;;
+  esac
+}
+
+# Call the main function
+linux_check_full_file_systems "${OUTPUT_PATH}/df_-h"
+
+set +x
