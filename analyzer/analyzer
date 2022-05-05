@@ -30,6 +30,7 @@ function initialize_report(){
   REPORT_COUNT_INFO=0
   REPORT_COUNT_WARNINGS=0
   REPORT_COUNT_CRITICAL=0
+  REPORT_COUNT_SKIPPED=0
 }
 
 function print_report_summary() {
@@ -38,6 +39,7 @@ function print_report_summary() {
   echo "======================================================================="
   echo "${STR_PASSED} = ${REPORT_COUNT_PASSED}"
   echo "${STR_FAIL} = ${REPORT_COUNT_FAILED}"
+  echo "${STR_SKIPPED} = ${REPORT_COUNT_SKIPPED}"
   echo "${STR_INFO} = ${REPORT_COUNT_INFO}"
   echo "${STR_WARN} = ${REPORT_COUNT_WARNINGS}"
   echo "${STR_CRIT} = ${REPORT_COUNT_CRITICAL}"
