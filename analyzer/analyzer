@@ -29,6 +29,7 @@ function initialize_report(){
   REPORT_COUNT_FAILED=0
   REPORT_COUNT_INFO=0
   REPORT_COUNT_WARNINGS=0
+  REPORT_COUNT_CRITICAL=0
 }
 
 function print_report_summary() {
@@ -39,6 +40,7 @@ function print_report_summary() {
   echo "${STR_FAIL} = ${REPORT_COUNT_FAILED}"
   echo "${STR_INFO} = ${REPORT_COUNT_INFO}"
   echo "${STR_WARN} = ${REPORT_COUNT_WARNINGS}"
+  echo "${STR_CRIT} = ${REPORT_COUNT_CRITICAL}"
 }
 
 #################################################################################################
