@@ -35,10 +35,10 @@ function optane_check_dimm_error_injection_enabled() {
   done <<<  "$(${GREP} ErrorInjectionEnabled ${FNAME})" || return 0
   # Report details of DIMMS that have ErrorInjectionEnabled  
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Error injection enabled DIMMs found!"
+    info_msg "Error injection enabled DIMMs found!" 2
     for d in "${!ERROR_INJECTION_ENABLED[@]}" ; do # Display the full list of DIMMs found
       ERROR_INJECTION_ENABLED=${ERROR_INJECTION_ENABLED[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${ERROR_INJECTION_ENABLED}"
+      info_msg "${d} = ${ERROR_INJECTION_ENABLED}" 2
     done
   fi
   # Return the final PASS/FAIL to the user

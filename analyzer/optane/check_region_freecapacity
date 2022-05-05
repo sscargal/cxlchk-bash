@@ -40,10 +40,10 @@ function optane_check_region_freecapacity() {
 
   # Report Regions with different free capacities or non-zero free capacities
   if [[ ${#REGION_FREECAPACITY[@]} -gt 1 ]]; then
-    info_msg "Multiple (${#REGION_FREECAPACITY[@]}) Region Free Capacities found!"
+    info_msg "Multiple (${#REGION_FREECAPACITY[@]}) Region Free Capacities found!" 2
     for r in "${!REGION_FREECAPACITY[@]}" ; do # Display the full list of Regions found
       REGION_LIST=${REGION_FREECAPACITY[${r}]::-1} # Strip the last character ',' from the string
-      info_msg "Socket ${REGION_LIST} has ${r} Free"
+      info_msg "Socket ${REGION_LIST} has ${r} Free" 2
     done
     ERR_STATE=true
   fi

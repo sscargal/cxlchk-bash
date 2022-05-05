@@ -43,10 +43,10 @@ function optane_check_dimm_software_triggers_enabled_details() {
   done <<<  "$(${GREP} -E 'SoftwareTriggersEnabled|SoftwareTriggersEnabledDetails' ${FNAME})" || return 0
   # Report details of DIMMS that have SoftwareTriggersEnabled   
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "${#STE_STED[@]} software triggers enabled details found!"
+    info_msg "${#STE_STED[@]} software triggers enabled details found!" 2
     for d in "${!STE_STED[@]}" ; do # Display the full list of DIMMs found
       STE_STED=${STE_STED[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${STE_STED}"
+      info_msg "${d} = ${STE_STED}" 2
     done
   fi
   # Return the final PASS/FAIL to the user

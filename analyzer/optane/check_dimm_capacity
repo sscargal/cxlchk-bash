@@ -39,10 +39,10 @@ function optane_check_dimm_capacity() {
 
   # If the capacity counter array has more than one capacity, we have found different sized modules
   if [[ ${#DIMM_CAPACITY_COUNT_ARR[@]} -gt 1 ]] ; then
-    info_msg "Multiple (${#DIMM_CAPACITY_COUNT_ARR[@]}) PMem capacities found! All PMem modules should have the same capacity."
+    info_msg "Multiple (${#DIMM_CAPACITY_COUNT_ARR[@]}) PMem capacities found! All PMem modules should have the same capacity." 2
     for d in "${!DIMM_CAPACITY_COUNT_ARR[@]}" ; do # Display the full list of DimmIDs and Capacities found
       DIMM_LIST=${DIMM_CAPACITY_COUNT_ARR[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${DIMM_LIST}"
+      info_msg "${d} = ${DIMM_LIST}" 2
       ERR_STATE=true
     done
   fi

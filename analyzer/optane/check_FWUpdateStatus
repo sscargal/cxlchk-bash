@@ -41,10 +41,10 @@ function optane_check_dimm_fwupdatestatus() {
 
   # Report DIMMS with staged firmware
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Multiple (${#FW_Version[@]}) ${Property} DIMM states found!"
+    info_msg "Multiple (${#FW_Version[@]}) ${Property} DIMM states found!" 2
     for d in "${!FW_Version[@]}" ; do # Display the full list of DIMMs found
       FW_Version=${FW_Version[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${FW_Version}"
+      info_msg "${d} = ${FW_Version}" 2
     done
   fi
 

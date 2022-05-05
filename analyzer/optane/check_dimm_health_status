@@ -39,10 +39,10 @@ function optane_check_dimm_health_status() {
 
   # If the HealthState counter array has more than one State, or we previously found non-Healthy modules, print the array
   if [[ ${#DIMM_HEALTHSTATE_COUNT[@]} -gt 1 ]] || [[ "${ERR_STATE}" = true ]]; then
-    info_msg "Multiple (${#DIMM_HEALTHSTATE_COUNT[@]}) PMem Health states identified!"
+    info_msg "Multiple (${#DIMM_HEALTHSTATE_COUNT[@]}) PMem Health states identified!" 2
     for d in "${!DIMM_HEALTHSTATE_COUNT[@]}" ; do # Display the full list of DimmIDs and Capacities found
       DIMM_LIST=${DIMM_HEALTHSTATE_COUNT[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${DIMM_LIST}"
+      info_msg "${d} = ${DIMM_LIST}" 2
     done
   fi
 

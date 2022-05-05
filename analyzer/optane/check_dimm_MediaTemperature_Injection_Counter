@@ -41,10 +41,10 @@ function optane_check_dimm_media_temperature_injections_count() {
 
   # Report DIMMS with MediaTemperatureCounter value != 0
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Multiple (${#MEDIA_TEMP_INJ_COUNTER[@]}) ${Property} DIMM states found!"
+    info_msg "Multiple (${#MEDIA_TEMP_INJ_COUNTER[@]}) ${Property} DIMM states found!" 2
     for d in "${!MEDIA_TEMP_INJ_COUNTER[@]}" ; do # Display the full list of DIMMs found
       MEDIA_TEMP_INJ_COUNTER=${MEDIA_TEMP_INJ_COUNTER[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${MEDIA_TEMP_INJ_COUNTER}"
+      info_msg "${d} = ${MEDIA_TEMP_INJ_COUNTER}" 2
     done
   fi
 

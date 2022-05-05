@@ -41,10 +41,10 @@ function optane_check_media_temperature_injection_enabled() {
 
   # Report DIMMS with ManageabilityState = "Unmanageable"
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Multiple (${#MEDIATEMP_INJECTION[@]}) ${Property} DIMM states found!"
+    info_msg "Multiple (${#MEDIATEMP_INJECTION[@]}) ${Property} DIMM states found!" 2
     for d in "${!MEDIATEMP_INJECTION[@]}" ; do # Display the full list of DIMMs found
       MEDIATEMP_INJECTION=${MEDIATEMP_INJECTION[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${MEDIATEMP_INJECTION}"
+      info_msg "${d} = ${MEDIATEMP_INJECTION}" 2
     done
   fi
 

@@ -39,10 +39,10 @@ function optane_check_dimm_firmware_version() {
 
   # If the firmware counter array has more than one firmware version, we have found modules with different firmware 
   if [[ ${#DIMM_FW_COUNT[@]} -gt 1 ]] ; then
-    info_msg "Multiple (${#DIMM_FW_COUNT[@]}) firmware versions found! All PMem modules should have the same firmware version."
+    info_msg "Multiple (${#DIMM_FW_COUNT[@]}) firmware versions found! All PMem modules should have the same firmware version." 2
     for d in "${!DIMM_FW_COUNT[@]}" ; do # Display the full list of DimmIDs and Capacities found
       DIMM_LIST=${DIMM_FW_COUNT[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${DIMM_LIST}"
+      info_msg "${d} = ${DIMM_LIST}" 2
       ERR_STATE=true
     done
   fi

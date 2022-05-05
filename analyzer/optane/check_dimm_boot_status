@@ -41,10 +41,10 @@ function optane_check_dimm_boot_status() {
   
   # Report details of DIMMS that have BootStatus != Success
   if [ "${BOOT_REGISTER}" = true ]; then
-    info_msg "${#BOOT_REGISTER[@]} Dimms with unsuccessful BootStatus found!"
+    info_msg "${#BOOT_REGISTER[@]} Dimms with unsuccessful BootStatus found!" 2
     for d in "${!BOOT_REGISTER[@]}" ; do # Display the full list of DIMMs found
       BOOT_REGISTER=${BOOT_REGISTER[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${BOOT_REGISTER}"
+      info_msg "${d} = ${BOOT_REGISTER}" 2
     done
   fi
   

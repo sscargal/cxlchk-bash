@@ -30,16 +30,16 @@ function optane_check_dimm_percentage_remaining() {
     if [[ ${CurrentValue} -lt 100 ]] && [[ ${CurrentValue} -ge 50 ]]
     then 
       REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
-      info_msg "DimmID ${DimmID} has ${CurrentValue}% life remaining"
+      info_msg "DimmID ${DimmID} has ${CurrentValue}% life remaining" 2
     elif [[ ${CurrentValue} -lt 50 ]] && [[ ${CurrentValue} -ge 25 ]]
     then 
       REPORT_COUNT_WARNINGS=$((REPORT_COUNT_WARNINGS+1))
-      warn_msg "DimmID ${DimmID} has ${CurrentValue}% life remaining"
+      warn_msg "DimmID ${DimmID} has ${CurrentValue}% life remaining" 2
       ERR_STATE=true
     elif [[ ${CurrentValue} -lt 25 ]] && [[ ${CurrentValue} -ge 0 ]]
     then 
       REPORT_COUNT_CRITICAL=$((REPORT_COUNT_CRITICAL+1))
-      crit_msg "DimmID ${DimmID} has ${CurrentValue}% life remaining"
+      crit_msg "DimmID ${DimmID} has ${CurrentValue}% life remaining" 2
       ERR_STATE=true
     fi	
   done <<<  "$(${GREP} PercentageRemaining ${FNAME})" || return 0
