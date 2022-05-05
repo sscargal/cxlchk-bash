@@ -14,7 +14,7 @@ function optane_check_dimm_lockstate() {
 
   # Exit the function with INFO message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
-    echo "${STR_INFO} ${FUNCNAME[0]} : Could not process '${FNAME}'. File not found"
+    info_msg "Could not process '${FNAME}'. File not found"
     REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
     return
   fi
@@ -63,10 +63,10 @@ function optane_check_dimm_lockstate() {
   # Report non-Disabled or non-Unlocked dimms
   # if [[ ${#DIMM_LOCKSTATE_COUNT[@]} -gt 1 ]] || [[ "${ERR_STATE}" = true ]]; then
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Multiple (${#DIMM_LOCKSTATE_COUNT[@]}) PMem LockStates found!"
+    info_msg "Multiple (${#DIMM_LOCKSTATE_COUNT[@]}) PMem LockStates found!" 2
     for d in "${!DIMM_LOCKSTATE_COUNT[@]}" ; do # Display the full list of DimmIDs and Capacities found
       DIMM_LIST=${DIMM_LOCKSTATE_COUNT[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${DIMM_LIST}"
+      info_msg "${d} = ${DIMM_LIST}" 2
     done
   fi
 

@@ -45,10 +45,10 @@ function optane_check_masterpassphraseenabled() {
   # Report if different states were found on different PMem modules (Highly unusual)
   if [ "${#DIMM_HEALTH[@]}" -gt 1 ]; then
     ERR_STATE=true
-    info_msg "Multiple (${#DIMM_HEALTH[@]}) ${PropertyType} DIMM states found!"
+    info_msg "Multiple (${#DIMM_HEALTH[@]}) ${PropertyType} DIMM states found!" 2
     for d in "${!DIMM_HEALTH[@]}" ; do # Display the full list of DIMMs found
       DIMM_LIST=${DIMM_HEALTH[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${DIMM_LIST}"
+      info_msg "${d} = ${DIMM_LIST}" 2
     done
   fi
 
@@ -58,10 +58,10 @@ function optane_check_masterpassphraseenabled() {
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
   else 
     if [ "${MasterPassphraseEnabled}" == "true" ] ; then
-      echo "${STR_INFO} ${FUNCNAME[0]} : Master Passphrase is Enabled"
+      info_msg "Master Passphrase is Enabled"
       REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
     else
-      echo "${STR_INFO} ${FUNCNAME[0]} : Master Passphrase is Disabled"
+      info_msg "Master Passphrase is Disabled"
       REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
     fi
   fi 

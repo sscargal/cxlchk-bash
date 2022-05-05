@@ -33,10 +33,10 @@ function optane_check_dimm_ppc_extended_adr_enabled() {
   done <<<  "$(${GREP} -E PpcExtendedAdrEnabled ${FNAME})" || return 0
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_INFO} ${FUNCNAME[0]} : One or more PMem modules have PpcExtendedAdrEnabled=False (Disabled)" 
+    info_msg "One or more PMem modules have PpcExtendedAdrEnabled=False (Disabled)" 
     REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
    else
-     echo "${STR_INFO} ${FUNCNAME[0]} : All PMem modules have PpcExtendedAdrEnabled=True (Enabled)" 
+     info_msg "All PMem modules have PpcExtendedAdrEnabled=True (Enabled)" 
      REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
   fi
 }

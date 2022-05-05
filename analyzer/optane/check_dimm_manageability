@@ -41,10 +41,10 @@ function optane_check_dimm_manageabilitystate() {
 
   # Report DIMMS with ManageabilityState = "Unmanageable"
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Multiple (${#MANAGEABILITY_STATE[@]}) ${Property} DIMM states found!"
+    info_msg "Multiple (${#MANAGEABILITY_STATE[@]}) ${Property} DIMM states found!" 2
     for d in "${!MANAGEABILITY_STATE[@]}" ; do # Display the full list of DIMMs found
       MANAGEABILITY_STATE=${MANAGEABILITY_STATE[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${MANAGEABILITY_STATE}"
+      info_msg "${d} = ${MANAGEABILITY_STATE}" 2
     done
   fi
 

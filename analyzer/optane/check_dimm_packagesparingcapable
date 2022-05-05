@@ -41,10 +41,10 @@ function optane_check_dimm_packagesparingcapable() {
 
   # Report non-Healthy DIMMs
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Multiple (${#DIMM_HEALTH[@]}) ${PropertyType} DIMM states found!"
+    info_msg "Multiple (${#DIMM_HEALTH[@]}) ${PropertyType} DIMM states found!" 2
     for d in "${!DIMM_HEALTH[@]}" ; do # Display the full list of DIMMs found
       DIMM_LIST=${DIMM_HEALTH[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${DIMM_LIST}"
+      info_msg "${d} = ${DIMM_LIST}" 2
     done
   fi
 

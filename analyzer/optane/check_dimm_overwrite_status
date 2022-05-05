@@ -41,10 +41,10 @@ function optane_check_dimm_overwrite_status() {
   
   # Report details of the Overwrite status for all modules
   if [ "${#OVERWRITE_STATUS}" -ge 0 ]; then
-    info_msg "${#OVERWRITE_STATUS[@]} Overwrite Status found:"
+    info_msg "${#OVERWRITE_STATUS[@]} Overwrite Status found:" 2
     for d in "${!OVERWRITE_STATUS[@]}" ; do # Display the full list of DIMMs found
       OVERWRITE_STATUS=${OVERWRITE_STATUS[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${OVERWRITE_STATUS}"
+      info_msg "${d} = ${OVERWRITE_STATUS}" 2
     done
   else # No entries were found in the array so return without doing anything
     return 0
@@ -52,7 +52,7 @@ function optane_check_dimm_overwrite_status() {
   
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_WARN} ${FUNCNAME[0]} : One or more PMem modules have Overwrite Status != 'Completed' or 'Unknown'" 
+    warn_msg "One or more PMem modules have Overwrite Status != 'Completed' or 'Unknown'" 
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
   else
     echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have Overwrite Status == '${!OVERWRITE_STATUS[@]}'" 

@@ -36,10 +36,10 @@ function optane_check_region_persistentmemorytype() {
 
   # Report Regions with different types
   if [[ ${#REGION_TYPE[@]} -gt 1 ]]; then
-    info_msg "Multiple (${#REGION_TYPE[@]}) Region have different PersistentMemoryType configurations!"
+    info_msg "Multiple (${#REGION_TYPE[@]}) Region have different PersistentMemoryType configurations!" 2
     for r in "${!REGION_TYPE[@]}" ; do # Display the full list of Regions found
       REGION_LIST=${REGION_TYPE[${r}]::-1} # Strip the last character ',' from the string
-      info_msg "${r} = ${REGION_LIST}"
+      info_msg "${r} = ${REGION_LIST}" 2
     done
     ERR_STATE=true
   fi

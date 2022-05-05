@@ -32,15 +32,15 @@ function linux_check_full_file_systems() {
     fi
     # Report when UsedPct > 75%, 85%, and 95% 
     if [[ "${UsedPct}" -ge 95 ]]; then 
-      info_msg "${MountedOn} is '${UsedPct}%' full. This may impact performance!"
+      info_msg "${MountedOn} is '${UsedPct}%' full. This may impact performance!" 2
       ERR_STATE="FAIL"
     elif [[ "${UsedPct}" -ge 85 ]]; then
-      info_msg "${MountedOn} is '${UsedPct}%' full. Consider clearing out space or growing the file system capacity."
+      info_msg "${MountedOn} is '${UsedPct}%' full. Consider clearing out space or growing the file system capacity." 2
       if [[ -z ${ERR_STATE} ]]; then 
         ERR_STATE="WARN"
       fi
     elif [[ "${UsedPct}" -ge 75 ]]; then
-      info_msg "${MountedOn} is '${UsedPct}%' full."
+      info_msg "${MountedOn} is '${UsedPct}%' full." 2
       if [[ -z ${ERR_STATE} ]]; then
         ERR_STATE="INFO"
       fi
@@ -51,7 +51,7 @@ function linux_check_full_file_systems() {
   case "${ERR_STATE}" in 
     "FAIL")
       echo "${STR_FAIL} ${FUNCNAME[0]} : One or more file systems are >=95% full. See previous errors."
-      REPORT_COUNT_FAIL=$((REPORT_COUNT_FAIL+1)) 
+      REPORT_COUNT_FAILED=$((REPORT_COUNT_FAIL+1)) 
       ;;
     "WARN")
       echo "${STR_WARN} ${FUNCNAME[0]} : One or more file systems are >=85% full. See previous errors."

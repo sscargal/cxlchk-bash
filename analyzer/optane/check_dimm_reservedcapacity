@@ -41,16 +41,16 @@ function optane_check_dimm_reservedcapacity() {
 
   # Report non-Healthy DIMMs
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Multiple (${#DIMM_HEALTH[@]}) ${PropertyType} DIMM states found!"
+    info_msg "Multiple (${#DIMM_HEALTH[@]}) ${PropertyType} DIMM states found!" 2
     for d in "${!DIMM_HEALTH[@]}" ; do # Display the full list of DIMMs found
       DIMM_LIST=${DIMM_HEALTH[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${DIMM_LIST}"
+      info_msg "${d} = ${DIMM_LIST}" 2
     done
   fi
 
   # Return the final PASS/INFO to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_INFO} ${FUNCNAME[0]} : One or more PMem modules reported > 0.000 GiB ReservedCapacity" 
+    info_msg "One or more PMem modules reported > 0.000 GiB ReservedCapacity" 
     REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
   else
     echo "${STR_PASSED} ${FUNCNAME[0]} : No PMem modules have ReservedCapacity configured" 

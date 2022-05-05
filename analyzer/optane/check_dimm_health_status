@@ -13,7 +13,7 @@ function optane_check_dimm_health_status() {
 
   # Exit the function with INFO message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
-    echo "${STR_INFO} ${FUNCNAME[0]} : Could not process '${FNAME}'. File not found"
+    info_msg "Could not process '${FNAME}'. File not found"
     REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
     return
   fi
@@ -39,10 +39,10 @@ function optane_check_dimm_health_status() {
 
   # If the HealthState counter array has more than one State, or we previously found non-Healthy modules, print the array
   if [[ ${#DIMM_HEALTHSTATE_COUNT[@]} -gt 1 ]] || [[ "${ERR_STATE}" = true ]]; then
-    info_msg "Multiple (${#DIMM_HEALTHSTATE_COUNT[@]}) PMem Health states identified!"
+    info_msg "Multiple (${#DIMM_HEALTHSTATE_COUNT[@]}) PMem Health states identified!" 2
     for d in "${!DIMM_HEALTHSTATE_COUNT[@]}" ; do # Display the full list of DimmIDs and Capacities found
       DIMM_LIST=${DIMM_HEALTHSTATE_COUNT[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${DIMM_LIST}"
+      info_msg "${d} = ${DIMM_LIST}" 2
     done
   fi
 

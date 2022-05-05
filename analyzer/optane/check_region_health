@@ -40,10 +40,10 @@ function optane_check_region_health() {
 
   # Report non-Healthy Regions
   if [ "${ERR_STATE}" = true ]; then
-    info_msg "Multiple (${#REGION_HEALTH[@]}) Region Health states found!"
+    info_msg "Multiple (${#REGION_HEALTH[@]}) Region Health states found!" 2
     for d in "${!REGION_HEALTH[@]}" ; do # Display the full list of Regions found
       REGION_LIST=${REGION_HEALTH[${d}]::-1} # Strip the last character ',' from the string
-      info_msg "${d} = ${REGION_LIST}"
+      info_msg "${d} = ${REGION_LIST}" 2
     done
   fi
 
