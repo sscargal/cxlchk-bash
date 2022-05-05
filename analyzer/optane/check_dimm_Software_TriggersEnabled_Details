@@ -51,7 +51,7 @@ function optane_check_dimm_software_triggers_enabled_details() {
   fi
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_INFO} ${FUNCNAME[0]} : One or more PMem modules have software trigger enabled " 
+    info_msg "One or more PMem modules have software trigger enabled " 
     REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
    else
      echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have software trigger disabled" 

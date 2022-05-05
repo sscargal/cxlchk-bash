@@ -50,7 +50,7 @@ function optane_check_dimm_reservedcapacity() {
 
   # Return the final PASS/INFO to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_INFO} ${FUNCNAME[0]} : One or more PMem modules reported > 0.000 GiB ReservedCapacity" 
+    info_msg "One or more PMem modules reported > 0.000 GiB ReservedCapacity" 
     REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
   else
     echo "${STR_PASSED} ${FUNCNAME[0]} : No PMem modules have ReservedCapacity configured" 

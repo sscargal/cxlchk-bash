@@ -14,7 +14,7 @@ function optane_check_dimm_firmware_version() {
 
   # Exit the function with INFO message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then 
-    echo "${STR_INFO} ${FUNCNAME[0]} : Could not process '${FNAME}'. File not found"
+    info_msg "Could not process '${FNAME}'. File not found"
     REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
     return
   fi

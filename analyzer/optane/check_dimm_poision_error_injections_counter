@@ -42,14 +42,14 @@ function optane_check_dimm_poision_error_injection_and_clear_counter() {
          if [[ "${PEIC}" -ne "${PEC}" ]]; then
            ERR_STATE=true
          else
-           echo "${STR_INFO} ${FUNCNAME[0]} : Dimm ${DimmID} has equal but non zero injected errors and cleared errors "
+           info_msg "${DimmID} has equal but non zero injected errors and cleared errors " 2
          fi        
       fi
     fi 
   done <<<  "$(${GREP} -E 'PoisonErrorInjectionsCounter|PoisonErrorClearCounter' ${FNAME})" || return 0 
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_CRIT} ${FUNCNAME[0]} : One or more PMem modules have PoisionErrorInjectionCounter not equal to PoisionErrorCounter " 
+    info_msg "One or more PMem modules have PoisionErrorInjectionCounter not equal to PoisionErrorCounter " 
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
    else
      echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have equal PosionErrorInjectionCounter and PoisionErrorCounter  " 
@@ -58,5 +58,3 @@ function optane_check_dimm_poision_error_injection_and_clear_counter() {
 }
 # Call the main function
 optane_check_dimm_poision_error_injection_and_clear_counter "${OUTPUT_PATH}/ipmctl_show_-a_-dimm.psv"
-
-

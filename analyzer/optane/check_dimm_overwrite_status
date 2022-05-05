@@ -52,7 +52,7 @@ function optane_check_dimm_overwrite_status() {
   
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_WARN} ${FUNCNAME[0]} : One or more PMem modules have Overwrite Status != 'Completed' or 'Unknown'" 
+    warn_msg "One or more PMem modules have Overwrite Status != 'Completed' or 'Unknown'" 
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
   else
     echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have Overwrite Status == '${!OVERWRITE_STATUS[@]}'" 
