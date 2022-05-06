@@ -14,8 +14,7 @@ function optane_check_media_temperature_injection_enabled() {
 
   # Exit the function with INFO message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
-    info_msg " Could not process '${FNAME}'. File not found"
-    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    rule_result SKIPPED "Could not process '${FNAME}'. File not found"
     return
   fi
 
@@ -50,11 +49,9 @@ function optane_check_media_temperature_injection_enabled() {
 
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules have thier Media Temperature Injection Enabled" 
-    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+    rule_result FAILED "One or more PMem modules have thier Media Temperature Injection Enabled"
   else
-    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have thier MediaTemperature Injection Disabled" 
-    REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+    rule_result PASSED "All PMem modules have thier MediaTemperature Injection Disabled"
   fi
 }
 

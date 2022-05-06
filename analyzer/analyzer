@@ -3,7 +3,7 @@
 function execute_rules() {
   # Source all test/modules and exclude this main script
   for test in $(find ./analyzer/ -type f | egrep -v "analyzer/analyzer") ; do 
-    . ${test} # Run each test found
+    . "${test}" # Run each test found
   done
 }
 
@@ -23,6 +23,7 @@ function display_analyzer_end() {
   echo "======================================================================="
 }
 
+# Initialize the report variables
 function initialize_report(){
   # Initialize report counters
   REPORT_COUNT_PASSED=0
@@ -31,8 +32,10 @@ function initialize_report(){
   REPORT_COUNT_WARNINGS=0
   REPORT_COUNT_CRITICAL=0
   REPORT_COUNT_SKIPPED=0
+  REPORT_COUNT_UNKNOWN=0
 }
 
+# Print the report summary
 function print_report_summary() {
   echo "======================================================================="
   echo "Analysis Report Summary"
@@ -43,6 +46,55 @@ function print_report_summary() {
   echo "${STR_INFO} = ${REPORT_COUNT_INFO}"
   echo "${STR_WARN} = ${REPORT_COUNT_WARNINGS}"
   echo "${STR_CRIT} = ${REPORT_COUNT_CRITICAL}"
+  echo "${STR_UNKNOWN} = ${REPORT_COUNT_UNKNOWN}"
+}
+
+
+# Handle the results from the rules
+# Print the result, and bump the report counters
+# arg1 = Result/Message Type (Passed, Failed, Info, Warning, Critical, Skipped)
+# arg2 = Result Message String
+function rule_result() {
+  local func="${FUNCNAME[1]}" # Get the calling function name
+  local type="${1}"
+  local msg="${2}"
+
+  # TODO: Could simplify the matches by using Bash strings to convert to UPPER or lower case
+  #       eg: tolower = "${type,,}"
+  # Option 2:
+  #	  shopt -s nocasematch
+  #       shopt -s extglob
+  # Option 3: 
+  #       In Bash version 4.1, bash always uses extended patterns inside the [[ ... ]] conditional expression, so the shopt line is no necessary.
+  case "${type}" in 
+    pass | passed | PASS | PASSED | Pass | Passed )
+      passed_msg "${msg}"
+      REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+      ;;
+    fail | failed | FAIL | FAILED | Fail | Failed )
+      failed_msg "${msg}"
+      REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+      ;;
+    info | infomation | INFO | INFOMATION | Info | Information )
+      info_msg "${msg}"
+      REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
+      ;;
+    warn | warning | WARN | WARNING | Warn | Warning )
+      warn_msg "${msg}"
+      REPORT_COUNT_WARNINGS=$((REPORT_COUNT_WARNINGS+1))
+      ;;
+    crit | critical | CRIT | CRITICAL | Crit | Critical )
+      crit_msg "${msg}"
+      REPORT_COUNT_CRITICAL=$((REPORT_COUNT_CRITICAL+1))
+      ;;
+    skip | skipped | SKIP | SKIPPED | Skip | Skipped )
+      REPORT_COUNT_SKIPPED=$((REPORT_COUNT_SKIPPED+1))
+      ;;
+    *) # Unknown
+      unknown_msg "${msg}"
+      REPORT_COUNT_UNKNOWN=$((REPORT_COUNT_UNKNOWN+1))       
+      ;;
+  esac
 }
 
 #################################################################################################

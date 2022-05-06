@@ -17,8 +17,7 @@ function optane_check_dimm_memoryboostfeature() {
 
   # Exit the function with INFO message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
-    info_msg " Could not process '${FNAME}'. File not found"
-    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    rule_result SKIPPED "Could not process '${FNAME}'. File not found"
     return
   fi
 
@@ -36,15 +35,12 @@ function optane_check_dimm_memoryboostfeature() {
       MemoryBandwidthBoostFeature=true
     fi
   done <<<  "$(${GREP} MemoryBandwidthBoostFeature ${FNAME})" || return 0
-  # If we can't find the property in the input file, exit the function
 
   # Return the state to the user
   if [ "${MemoryBandwidthBoostFeature}" = true ] ; then
-    echo "${STR_PASSED} ${FUNCNAME[0]} : Memory Bandwidth Boot Feature is Enabled"
-    REPORT_COUNT_FAILED=$((REPORT_COUNT_PASSED+1))
+    rule_result INFO "Memory Bandwidth Boot Feature is Enabled"
   else
-    echo "${STR_PASSED} ${FUNCNAME[0]} : Memory Bandwidth Boot Feature is Disabled"
-    REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+    rule_result INFO "Memory Bandwidth Boot Feature is Disabled"
   fi
 }
 

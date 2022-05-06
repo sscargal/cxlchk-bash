@@ -14,8 +14,7 @@ function optane_check_dimm_reservedcapacity() {
 
   # Exit the function with INFO message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
-    info_msg " Could not process '${FNAME}'. File not found"
-    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    rule_result SKIPPED "Could not process '${FNAME}'. File not found"
     return
   fi
 
@@ -50,11 +49,9 @@ function optane_check_dimm_reservedcapacity() {
 
   # Return the final PASS/INFO to the user
   if [ "${ERR_STATE}" = true ] ; then
-    info_msg "One or more PMem modules reported > 0.000 GiB ReservedCapacity" 
-    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
+    rule_result INFO "One or more PMem modules reported > 0.000 GiB ReservedCapacity"
   else
-    echo "${STR_PASSED} ${FUNCNAME[0]} : No PMem modules have ReservedCapacity configured" 
-    REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+    rule_result PASSED "No PMem modules have ReservedCapacity configured"
   fi
 }
 
