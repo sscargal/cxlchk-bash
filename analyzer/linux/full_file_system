@@ -50,20 +50,16 @@ function linux_check_full_file_systems() {
   # Return the final PASS/WARN/INFO/FAIL to the user
   case "${ERR_STATE}" in 
     "FAIL")
-      echo "${STR_FAIL} ${FUNCNAME[0]} : One or more file systems are >=95% full. See previous errors."
-      REPORT_COUNT_FAILED=$((REPORT_COUNT_FAIL+1)) 
+      rule_result FAIL "One or more file systems are >=95% full. See previous errors."
       ;;
     "WARN")
-      echo "${STR_WARN} ${FUNCNAME[0]} : One or more file systems are >=85% full. See previous errors."
-      REPORT_COUNT_WARNINGS=$((REPORT_COUNT_WARNINGS+1)) 
+      rule_result WARN "One or more file systems are >=85% full. See previous errors."
       ;;
     "INFO")
-      echo "${STR_INFO} ${FUNCNAME[0]} : One or more file systems are >=75% full. See previous errors."
-      REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) 
+      rule_result INFO "One or more file systems are >=75% full. See previous errors."
       ;;
     *)
-      echo "${STR_PASSED} ${FUNCNAME[0]} : All file systems are <75% full."
-      REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+      rule_result PASSED "All file systems are <75% full."
       ;;
   esac
 }

@@ -13,8 +13,7 @@ function optane_check_dimm_health_status() {
 
   # Exit the function with INFO message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
-    info_msg "Could not process '${FNAME}'. File not found"
-    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    rule_result SKIPPED "Could not process '${FNAME}'. File not found"
     return
   fi
 
@@ -48,11 +47,9 @@ function optane_check_dimm_health_status() {
 
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    echo "${STR_FAIL} ${FUNCNAME[0]} : One or more PMem modules reported a non-Healty status. See previous errors."
-    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
+    rule_result FAILED "One or more PMem modules reported a non-Healty status. See previous errors."
   else
-    echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem Modules are Healthy"
-    REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+    rule_result PASSED "All PMem Modules are Healthy"
   fi
 }
 

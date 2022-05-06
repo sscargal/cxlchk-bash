@@ -10,13 +10,13 @@ _MODULE_CHECK_DIMM_PPC_EXTENDED_ADR_ENABLED_="Loaded"
 function optane_check_dimm_ppc_extended_adr_enabled() {
   local FNAME=$1        # File name to process
   local ERR_STATE=false # Used for error reporting
+
   # Exit the function with INFO message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
-    info_msg " Could not process '${FNAME}'. File not found"
-    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    rule_result SKIPPED "Could not process '${FNAME}'. File not found"
     return
   fi
-  # Create Associative Array
+
   # Get the DimmID, Property, and Value fields from the input file
   while IFS='|' read -r DimmID Property Value 
   do
@@ -31,13 +31,12 @@ function optane_check_dimm_ppc_extended_adr_enabled() {
         ERR_STATE=true
     fi             
   done <<<  "$(${GREP} -E PpcExtendedAdrEnabled ${FNAME})" || return 0
+
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    info_msg "One or more PMem modules have PpcExtendedAdrEnabled=False (Disabled)" 
-    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
-   else
-     info_msg "All PMem modules have PpcExtendedAdrEnabled=True (Enabled)" 
-     REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1))
+    rule_result INFO "One or more PMem modules have PpcExtendedAdrEnabled=False (Disabled)" 
+  else
+    rule_result INFO "All PMem modules have PpcExtendedAdrEnabled=True (Enabled)"
   fi
 }
 # Call the main function

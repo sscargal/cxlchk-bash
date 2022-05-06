@@ -15,12 +15,13 @@ function optane_check_dimm_poision_error_injection_and_clear_counter() {
   local ERR_STATE=false # Used for error reporting
   local PEIC            # Used for storing values of target
   local PEC             # Used for storing values of target
+
   # Exit the function with INFO message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
-    info_msg " Could not process '${FNAME}'. File not found"
-    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    rule_result SKIPPED "Could not process '${FNAME}'. File not found"
     return
   fi
+
   # Get the DimmID, Property, and Value fields from the input file
   while IFS='|' read -r DimmID Property Value 
   do
@@ -47,13 +48,12 @@ function optane_check_dimm_poision_error_injection_and_clear_counter() {
       fi
     fi 
   done <<<  "$(${GREP} -E 'PoisonErrorInjectionsCounter|PoisonErrorClearCounter' ${FNAME})" || return 0 
+
   # Return the final PASS/FAIL to the user
   if [ "${ERR_STATE}" = true ] ; then
-    info_msg "One or more PMem modules have PoisionErrorInjectionCounter not equal to PoisionErrorCounter " 
-    REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
-   else
-     echo "${STR_PASSED} ${FUNCNAME[0]} : All PMem modules have equal PosionErrorInjectionCounter and PoisionErrorCounter  " 
-     REPORT_COUNT_PASSED=$((REPORT_COUNT_PASSED+1))
+    rule_result FAILED "One or more PMem modules have PoisionErrorInjectionCounter not equal to PoisionErrorCounter"
+  else
+    rule_result PASSED "All PMem modules have equal PosionErrorInjectionCounter and PoisionErrorCounter"
   fi
 }
 # Call the main function

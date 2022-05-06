@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -x
+#set -x
 
 ###############################################################################
 # Define the message type printing formats
@@ -27,7 +27,12 @@ function info_msg() {
     fi
   fi
 
-  echo "${indentstr}${STR_INFO} ${FUNCNAME[1]} : ${1}"
+  # Ensure we capture the rule function, not an intermediary calling function - rule_result()
+  if [[ "${FUNCNAME[1]}" == "rule_result" ]]; then 
+    echo "${indentstr}${STR_INFO} ${FUNCNAME[2]} : ${1}"
+  else 
+    echo "${indentstr}${STR_INFO} ${FUNCNAME[1]} : ${1}"
+  fi
 }
 
 # Print WARNING messages with the function name and optional string message
@@ -47,7 +52,12 @@ function warn_msg() {
     fi
   fi
 
-  echo "${STR_WARN} ${FUNCNAME[1]} : ${1}"
+  # Ensure we capture the rule function, not an intermediary calling function - rule_result()
+  if [[ "${FUNCNAME[1]}" == "rule_result" ]]; then
+    echo "${indentstr}${STR_WARN} ${FUNCNAME[2]} : ${1}"
+  else
+    echo "${indentstr}${STR_WARN} ${FUNCNAME[1]} : ${1}"
+  fi
 }
 
 # Print CRITICAL messages with the function name and optional string message
@@ -67,8 +77,114 @@ function crit_msg() {
     fi
   fi
 
-  echo "${STR_CRIT} ${FUNCNAME[1]} : ${1}"
+  # Ensure we capture the rule function, not an intermediary calling function - rule_result()
+  if [[ "${FUNCNAME[1]}" == "rule_result" ]]; then
+    echo "${indentstr}${STR_CRIT} ${FUNCNAME[2]} : ${1}"
+  else
+    echo "${indentstr}${STR_CRIT} ${FUNCNAME[1]} : ${1}"
+  fi
 }
+
+# Print SKIPPED messages with the function name and optional string message
+function skipped_msg() {
+  local indentstr=""
+  local icnt=${2}
+  local c
+
+  # If an indent size arg is provided, generate the string
+  if [[ -n "${icnt}" ]]; then
+    # Verify it's a positive number
+    local re='^[0-9]+$'
+    if [[ "${icnt}" =~ $re ]] ; then
+      for (( c=1; c<=${icnt}; c++ )); do
+        indentstr+=" "
+      done
+    fi
+  fi
+
+  # Ensure we capture the rule function, not an intermediary calling function - rule_result()
+  if [[ "${FUNCNAME[1]}" == "rule_result" ]]; then
+    echo "${indentstr}${STR_SKIPPED} ${FUNCNAME[2]} : ${1}"
+  else
+    echo "${indentstr}${STR_SKIPPED} ${FUNCNAME[1]} : ${1}"
+  fi
+}
+
+# Print PASSED messages with the function name and optional string message
+function passed_msg() {
+  local indentstr=""
+  local icnt=${2}
+  local c
+
+  # If an indent size arg is provided, generate the string
+  if [[ -n "${icnt}" ]]; then
+    # Verify it's a positive number
+    local re='^[0-9]+$'
+    if [[ "${icnt}" =~ $re ]] ; then
+      for (( c=1; c<=${icnt}; c++ )); do
+        indentstr+=" "
+      done
+    fi
+  fi
+
+  # Ensure we capture the rule function, not an intermediary calling function - rule_result()
+  if [[ "${FUNCNAME[1]}" == "rule_result" ]]; then
+    echo "${indentstr}${STR_PASSED} ${FUNCNAME[2]} : ${1}"
+  else
+    echo "${indentstr}${STR_PASSED} ${FUNCNAME[1]} : ${1}"
+  fi
+}
+
+# Print FAILED messages with the function name and optional string message
+function failed_msg() {
+  local indentstr=""
+  local icnt=${2}
+  local c
+
+  # If an indent size arg is provided, generate the string
+  if [[ -n "${icnt}" ]]; then
+    # Verify it's a positive number
+    local re='^[0-9]+$'
+    if [[ "${icnt}" =~ $re ]] ; then
+      for (( c=1; c<=${icnt}; c++ )); do
+        indentstr+=" "
+      done
+    fi
+  fi
+
+  # Ensure we capture the rule function, not an intermediary calling function - rule_result()
+  if [[ "${FUNCNAME[1]}" == "rule_result" ]]; then
+    echo "${indentstr}${STR_FAIL} ${FUNCNAME[2]} : ${1}"
+  else
+    echo "${indentstr}${STR_FAIL} ${FUNCNAME[1]} : ${1}"
+  fi
+}
+
+# Print UNKNOWN messages with the function name and optional string message
+function unknown_msg() {
+  local indentstr=""
+  local icnt=${2}
+  local c
+
+  # If an indent size arg is provided, generate the string
+  if [[ -n "${icnt}" ]]; then
+    # Verify it's a positive number
+    local re='^[0-9]+$'
+    if [[ "${icnt}" =~ $re ]] ; then
+      for (( c=1; c<=${icnt}; c++ )); do
+        indentstr+=" "
+      done
+    fi
+  fi
+
+  # Ensure we capture the rule function, not an intermediary calling function - rule_result()
+  if [[ "${FUNCNAME[1]}" == "rule_result" ]]; then
+    echo "${indentstr}${STR_UNKNOWN} ${FUNCNAME[2]} : ${1}"
+  else
+    echo "${indentstr}${STR_UNKNOWN} ${FUNCNAME[1]} : ${1}"
+  fi
+}
+
 
 ###############################################################################
 # Progress Bar
