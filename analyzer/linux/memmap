@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# set -x
+# Prevent repeated sourcing
+if [ -n "${_MODULE_CHECK_MEMMAP_}" ]; then
+  return
+fi
+_MODULE_CHECK_MEMMAP_="Loaded"
+
+# Report full or near full file systems 
+function linux_check_memmap() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=""    # Used for error reporting
+  local result=""	# Used to handle the result from the grep command
+
+  # Exit the function with INFO message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    info_msg " Could not process '${FNAME}'. File not found"
+    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    return
+  fi
+
+  # Report if the Linux boot command line included 'memmap' options
+  res=$(${GREP} "memmap" ${FNAME})
+  case "$?" in 
+    0)
+      rule_result INFO "One or more 'memmap' entries found in the Linux boot command line (/proc/cmdline)!"
+      ;;
+    1)
+      rule_result PASSED "No 'memmap' entries found in the Linux boot command line (/proc/cmdline)"
+      ;;
+    *)
+      rule_result SKIPPED "Failed to process /proc/cmdline looking for 'memmap' entries!"
+      ;;
+  esac
+}
+
+# Call the main function
+linux_check_memmap "${OUTPUT_PATH}/cmdline"
+
+set +x
