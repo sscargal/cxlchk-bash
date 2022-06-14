@@ -14,7 +14,7 @@ function optane_check_masterpassphraseenabled() {
   local ERR_STATE=false # Used for error reporting
   local MasterPassphraseEnabled=false # Used for reporting
 
-  # Exit the function with INFO message if the file to process doesn't exist
+  # Exit the function with a SKIPPED message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
     rule_result SKIPPED "Could not process '${FNAME}'. File not found"
     return
