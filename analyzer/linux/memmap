@@ -12,10 +12,9 @@ function linux_check_memmap() {
   local ERR_STATE=""    # Used for error reporting
   local result=""	# Used to handle the result from the grep command
 
-  # Exit the function with INFO message if the file to process doesn't exist
+  # Exit the function with a SKIPPED message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
-    info_msg " Could not process '${FNAME}'. File not found"
-    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    rule_result SKIPPED "Could not process '${FNAME}'. File not found"
     return
   fi
 

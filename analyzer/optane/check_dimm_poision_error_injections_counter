@@ -16,7 +16,7 @@ function optane_check_dimm_poision_error_injection_and_clear_counter() {
   local PEIC            # Used for storing values of target
   local PEC             # Used for storing values of target
 
-  # Exit the function with INFO message if the file to process doesn't exist
+  # Exit the function with a SKIPPED message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
     rule_result SKIPPED "Could not process '${FNAME}'. File not found"
     return

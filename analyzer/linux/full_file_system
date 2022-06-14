@@ -11,10 +11,9 @@ function linux_check_full_file_systems() {
   local FNAME=$1        # File name to process
   local ERR_STATE=""    # Used for error reporting
 
-  # Exit the function with INFO message if the file to process doesn't exist
+  # Exit the function with SKIPPED message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then
-    info_msg " Could not process '${FNAME}'. File not found"
-    REPORT_COUNT_INFO=$((REPORT_COUNT_INFO+1)) # Increment the INFO count
+    rule_result SKIPPED "Could not process '${FNAME}'. File not found"
     return
   fi
 
