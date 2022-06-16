@@ -31,7 +31,7 @@ function optane_check_dimm_population() {
   if [ -z ${DIMM_IDS} ]; then
     echo "${STR_FAIL} ${FUNCNAME[0]} : Could not get a list of PMem Devices."
     REPORT_COUNT_FAILED=$((REPORT_COUNT_FAILED+1))
-    err_state=true
+    ERR_STATE=true
     return
   fi 
   
@@ -39,7 +39,7 @@ function optane_check_dimm_population() {
   NUM_OF_DIMMIDS=${#DIMM_IDS[@]}
   if ! [[ ${NUM_OF_DIMMIDS} -eq 1 || i$(( ${NUM_OF_DIMMIDS} % 2 )) -eq 0 ]] ; then
     echo "${STR_FAIL} ${FUNCNAME[0]} : Detected an odd number of PMem devices. Expected 1 or an even number."
-    err_state=true
+    ERR_STATE=true
   fi
 
   # TODO: Perform more thorough population checks to ensure they meet the requirements
