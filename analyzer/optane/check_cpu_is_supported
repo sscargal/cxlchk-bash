@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# set -x
+
+# Prevent repeated sourcing
+if [ -n "${__MODULE_CHECK_CPU_SUPPORT__}" ]; then
+  return
+fi
+__MODULE_CHECK_CPU_SUPPORT__="Loaded"
+
+# Validate CPU supports Intel Optane Persistent Memory
+function optane_check_cpu_is_supported() {
+  local LSCPU=$1        # lscpu file 
+  local CPULIST=$1      # list of CPUs that support Intel Optane Persistent Memory
+  local ERR_STATE=false # Used for error reporting
+
+  # Exit the function with a SKIPPED message if the file to process doesn't exist
+  if [[ ! -f ${LSCPU} || ! -f ${CPULIST} ]] ; then
+    rule_result SKIPPED "Could not process '${LSCPU}' or '${CPULIST}'. File(s) not found"
+    return
+  fi
+
+  # Extract the CPU Model/SKU from `lscpu` and perform a lookup in the CPULIST file
+  CPU_MODEL=$(${GREP} -E "^Model name:" "${LSCPU}" | ${AWK} '{print $6}')
+  if [[ -z "${CPU_MODEL}" ]]; then 
+    rule_result SKIPPED "Could not identify CPU Model/SKU."
+  else 
+    # Validate the CPU SKU is a number, eg: 8280L
+    if [[ "${CPU_MODEL}" =~ ^[0-9] ]]; then 
+      ${GREP} "${CPU_MODEL}" "${CPULIST}" > /dev/null
+      if [ $? -eq 1 ]; then 
+        # CPU Model not found in supported list
+	info_msg "CPU Model '${CPU_MODEL}' not found in '${CPULIST}'." 2
+        ERR_STATE=true
+      fi
+    else
+      rule_result SKIPPED "CPU Model '${CPU_MODEL}' is not a valid number"
+    fi
+  fi
+
+  # Return the final PASS/FAIL to the user
+  if [ "${ERR_STATE}" = true ] ; then
+    rule_result FAILED "CPU Model '${CPU_MODEL}' does not support Intel Optane Persistent Memory. See previous errors."
+  else
+    rule_result PASSED "CPU Model '${CPU_MODEL}' supports Intel Optane Persistent Memory Modules."
+  fi
+}
+
+# Call the main function
+optane_check_cpu_is_supported "${OUTPUT_PATH}/lscpu" "${SCRIPT_DIR}/analyzer/optane/data/IntelOptanePMemCPU.list"
