@@ -11,6 +11,7 @@
 VERSION="0.1.0"					# version string
 
 SCRIPT_NAME=${0##*/}				# Name of this script
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )"	# Provides the full directory name of the script no matter where it is being called from
 
 NDCTL=("$(command -v ndctl)")                   # Path to ndctl, use -n option to specify location of the ndctl binary 
 DAXCTL=("$(command -v daxctl)")                 # Path to daxctl
