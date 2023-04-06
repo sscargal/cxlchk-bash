@@ -13,25 +13,23 @@ VERSION="0.1.0"					# version string
 SCRIPT_NAME=${0##*/}				# Name of this script
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )"	# Provides the full directory name of the script no matter where it is being called from
 
-NDCTL=("$(command -v ndctl)")                   # Path to ndctl, use -n option to specify location of the ndctl binary 
-DAXCTL=("$(command -v daxctl)")                 # Path to daxctl
-IPMCTL=("$(command -v ipmctl)")                 # Path to ipmctl, use -i option to specify the location of the ipmctl binary 
-CXLCLI=("$(command -v cxl)")			# Path to cxl, use -c option to specify the location of the cxl binary
-BC=("$(command -v bc)")				# Path to bc
+DAXCTL=("$(command -v daxctl)")     # Path to daxctl
+CXLCLI=("$(command -v cxl)")			  # Path to cxl, use -c option to specify the location of the cxl binary
+BC=("$(command -v bc)")				      # Path to bc
 NUMACTL=("$(command -v numactl)")		# Path to numactl
-LSCPU=("$(command -v lscpu)")                   # Path to lscpu
-AWK=("$(command -v awk)")                       # Path to awk
-GREP=("$(command -v grep)")			# Path to grep
-EGREP=("$(command -v egrep)")			# Path to egrep
-SED=("$(command -v sed)")			# Path to sed
-TPUT=("$(command -v tput)")			# Path to tput
-CP=("$(command -v cp)")				# Path to cp
-FIND=("$(command -v find)")                     # Path to find
-TEE=("$(command -v tee)")                       # Path to tee
-TAIL=("$(command -v tail)")                     # Path to tail
+LSCPU=("$(command -v lscpu)")       # Path to lscpu
+AWK=("$(command -v awk)")           # Path to awk
+GREP=("$(command -v grep)")			    # Path to grep
+EGREP=("$(command -v egrep)")			  # Path to egrep
+SED=("$(command -v sed)")			      # Path to sed
+TPUT=("$(command -v tput)")			    # Path to tput
+CP=("$(command -v cp)")				      # Path to cp
+FIND=("$(command -v find)")         # Path to find
+TEE=("$(command -v tee)")           # Path to tee
+TAIL=("$(command -v tail)")         # Path to tail
 
-OUTPUT_PATH="./pmemchk.`hostname`.`date +"%m%d-%H%M"`" # output directory created by this script
-STDOUT_LOG_FILE="pmemchk.log"			# Filename to save STDOUT and STDERR
+OUTPUT_PATH="./cxlchk.`hostname`.`date +"%m%d-%H%M"`" # output directory created by this script
+STDOUT_LOG_FILE="cxlchk.log"			# Filename to save STDOUT and STDERR
 TERMCOLORS=false				# Use terminal colors or not (default: FALSE)
 
 # Variables for script input options and arguments
@@ -68,7 +66,7 @@ function bash_version_check() {
 function display_start_info() {
   START_TIME=$(date +%s)
   echo "======================================================================="
-  echo "Starting PMem Checker"
+  echo "Starting CXL Checker"
   echo "${SCRIPT_NAME} Version ${VERSION}"
   echo "Started: $(date --date @${START_TIME})"
   echo "======================================================================="
@@ -79,7 +77,7 @@ function display_end_info() {
   END_TIME=$(date +%s)
   TEST_DURATION=$((${END_TIME}-${START_TIME}))
   echo "======================================================================="
-  echo "PMem Checker Complete"
+  echo "CXL Checker Complete"
   echo "Ended: $(date --date @${END_TIME})"
   echo "Duration: ${TEST_DURATION} seconds"
   echo "Results: ${OUTPUT_PATH}"
@@ -108,24 +106,6 @@ function verify_os(){
 # We use either the defaults or user specified paths
 function verify_cmds() {
   err_state=false
-
-  if [ ! -x "${NDCTL}" ]; then
-    echo "ERROR: ndctl command not found! Use -n to specify the location."
-    err_state=true 
-  else 
-    echo "Using NDCTL command: ${NDCTL}"
-    echo "NDCTL version: $(${NDCTL} version)"
-  fi
-
-  if [ ! -x "${IPMCTL}" ]; then
-    echo "ERROR: ipmctl command not found! Use -i to specify the location."
-    err_state=true 
-  else 
-    echo "Using IPMCTL command: ${IPMCTL}"
-    TOKENS=( $(${IPMCTL} version 2>&1 ) )
-    IPMCTL_VER=${TOKENS[-1]}
-    echo "IPMCTL version: ${IPMCTL_VER}"
-  fi
 
   # daxctl is optional
   if [ ! -x "${DAXCTL}" ]; then
@@ -198,17 +178,11 @@ function display_usage() {
   echo "   -h,-?" 
   echo "      Display this help"
   echo " "
-  echo "   -i <Path to IPMCTL executable>"
-  echo "      Specify the path to the IPMCTL executable"
-  echo " "
   echo "   -l" 
   echo "      List Analyzer Modules and Rules"
   echo " "
   echo "   -m <module1, module2, ..., moduleN>"
   echo "      Specify which Analyzer modules to include or exclude"
-  echo " "
-  echo "   -n <Path to NDCTL executable>"
-  echo "      Specify the path to the NDCTL executable"
   echo " "
   echo "   -v"
   echo "      Print verbose output. Use -v, -vv, and -vvv to increase verbosity."
@@ -219,7 +193,7 @@ function display_usage() {
 function process_args() {
 
   # Process the command arguments and options
-  while getopts "h?A:Cc:i:lm:n:v" opt; do
+  while getopts "h?A:Cc:lm:v" opt; do
     case "$opt" in
     A) # Skip running the data collector and analyze a collected dataset (path specified by user)
       OPT_A=true
@@ -238,9 +212,6 @@ function process_args() {
     h|\?)
       display_usage $0
       ;;
-    i) # Set the location of the ipmctl binary
-      IPMCTL=${OPTARG}
-      ;;
     l) # List Analyzer Modules and Rules
       list_analyzer_modules
       list_analyzer_rules 
@@ -250,9 +221,6 @@ function process_args() {
       OPT_m=true
       ANALYZER_MODULE_LIST=${OPTARG}
       ;; 
-    n) # Set the location of the ndctl binary
-      NDCTL=${OPTARG}
-      ;;
     v) # Each -v should increase OPT_VERBOSITY level
       OPT_VERBOSITY=$(($OPT_VERBOSITY+1))
       # Source the debug_msg() function

@@ -1,14 +1,14 @@
-# pmemchk
+# cxlchk
 
 # Description 
-`pmemchk` can be used to confirm a system with persistent memory is healthy and the configuration looks sane. pmemchk has two main modules:
+`cxlchk` can be used to confirm a system with Compute Express Link (CXL) devices is healthy and the configuration looks sane. cxlchk has two main modules:
 - Collector - Collects configuration and health data from the host 
 - Analyzer - Runs tests against the collected data and reports whether the test Passes or Fails. If a test fails, there should be some information to explain why.
 
 # Help
 
 ```
-Usage: ./pmemchk [optional args]
+Usage: ./cxlchk [optional args]
 
 Checks for known issues with persistent memory configurations.
 Run with root privilege.
@@ -26,17 +26,11 @@ Optional args:
    -h,-?
       Display this help
 
-   -i <Path to IPMCTL executable>
-      Specify the path to the IPMCTL executable
-
    -l
       List Analyzer Modules and Rules
 
    -m <module1, module2, ..., moduleN>
       Specify which Analyzer modules to include or exclude
-
-   -n <Path to NDCTL executable>
-      Specify the path to the NDCTL executable
 
    -v
       Print verbose output. Use -v, -vv, and -vvv to increase verbosity.
@@ -44,32 +38,27 @@ Optional args:
 
 # Examples
 
-Execute `pmemchk` which runs the Collector and Analyzer
+Execute `cxlchk` which runs the Collector and Analyzer
 ```
-$ sudo ./pmemchk
+$ sudo ./cxlchk
 ```
 
 Only collect data from the host. Does not run the analyzer
 ```
-$ sudo ./pmemchk -C
+$ sudo ./cxlchk -C
 ```
 
 Runs the analyzer against a previously collected dataset
 ```
-$ sudo ./pmemchk -A ./pmemchk.hostname.0113-1210
-```
-
-Specifies the location of the `ipmctl`,`ndctl`, and `cxl` utilities if they are not in the root users PATH
-```
-$ sudo ./pmemchk -c /usr/local/bin/cxl -i /usr/local/bin/ipmctl -n /usr/local/bin/ndctl
+$ sudo ./cxlchk -A ./cxlchk.hostname.0113-1210
 ```
 
 List the available Analyzer Modules and Rules
 ```
-$ sudo ./pmemchk -l
+$ sudo ./cxlchk -l
 =======================================================================
 Starting PMem Checker
-pmemchk Version 0.1.0
+cxlchk Version 0.1.0
 Started: Tue Feb 15 03:56:52 PM MST 2022
 =======================================================================
 Analyzer Modules
@@ -96,10 +85,10 @@ analyzer/optane/check_region_health
 # Example Output
 The example output below shows what to expect when running the data collector and analysis
 ```
-$ sudo ./pmemchk
+$ sudo ./cxlchk
 =======================================================================
 Starting PMem Checker
-pmemchk Version 0.1.0
+cxlchk Version 0.1.0
 Started: Fri Jan 14 05:44:47 PM MST 2022
 =======================================================================
 Using NDCTL command: /usr/local/bin/ndctl
@@ -157,6 +146,6 @@ Analysis Report Summary
 PMem Checker Complete
 Ended: Fri Jan 14 05:45:42 PM MST 2022
 Duration: 55 seconds
-Results: ./pmemchk.hostname.0114-1744
+Results: ./cxlchk.hostname.0114-1744
 =======================================================================
 ```
