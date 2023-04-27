@@ -7,7 +7,7 @@ fi
 _MODULE_CHECK_OFFLINE_MEM_BLKS_="Loaded"
 
 # Find 'CXL' devices in `lspci`
-function cxl_find_devices() {
+function cxl_offline_mem_blocks() {
   local FNAME=$1        # File name to process
   local ERR_STATE=""    # Used for error reporting
   local result=""	      # Used to handle the result from the grep command
