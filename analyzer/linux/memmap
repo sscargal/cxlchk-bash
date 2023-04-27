@@ -6,11 +6,11 @@ if [ -n "${_MODULE_CHECK_MEMMAP_}" ]; then
 fi
 _MODULE_CHECK_MEMMAP_="Loaded"
 
-# Report full or near full file systems 
+# Report if the Kernel 'memmap' option was used
 function linux_check_memmap() {
   local FNAME=$1        # File name to process
   local ERR_STATE=""    # Used for error reporting
-  local result=""	# Used to handle the result from the grep command
+  local result=""	      # Used to handle the result from the grep command
 
   # Exit the function with a SKIPPED message if the file to process doesn't exist
   if [[ ! -f ${FNAME} ]] ; then

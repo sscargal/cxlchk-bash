@@ -1,0 +1,34 @@
+[
+  {
+    "memdev":"mem0",
+    "ram_size":68719476736,
+    "health":{
+      "maintenance_needed":true,
+      "performance_degraded":false,
+      "hw_replacement_needed":false,
+      "media_normal":false,
+      "media_not_ready":false,
+      "media_persistence_lost":true,
+      "media_data_lost":false,
+      "media_powerloss_persistence_loss":false,
+      "media_shutdown_persistence_loss":false,
+      "media_persistence_loss_imminent":false,
+      "media_powerloss_data_loss":false,
+      "media_shutdown_data_loss":false,
+      "media_data_loss_imminent":false,
+      "ext_life_used":"unknown",
+      "ext_temperature":"normal",
+      "ext_corrected_volatile":"normal",
+      "ext_corrected_persistent":"normal",
+      "life_used_percent":4,
+      "temperature":0,
+      "dirty_shutdowns":0,
+      "volatile_errors":0,
+      "pmem_errors":0
+    },
+    "serial":9947034306373222400,
+    "numa_node":0,
+    "host":"0000:38:00.0",
+    "state":"disabled"
+  }
+]

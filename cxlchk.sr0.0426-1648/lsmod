@@ -1,0 +1,110 @@
+Module                  Size  Used by
+tun                    69632  0
+overlay               200704  0
+tls                   147456  0
+nft_fib_inet           16384  1
+nft_fib_ipv4           16384  1 nft_fib_inet
+nft_fib_ipv6           16384  1 nft_fib_inet
+nft_fib                16384  3 nft_fib_ipv6,nft_fib_ipv4,nft_fib_inet
+nft_reject_inet        16384  6
+nf_reject_ipv4         16384  1 nft_reject_inet
+nf_reject_ipv6         20480  1 nft_reject_inet
+nft_reject             16384  1 nft_reject_inet
+nft_ct                 24576  19
+nft_chain_nat          16384  3
+nf_nat                 57344  1 nft_chain_nat
+nf_conntrack          184320  2 nf_nat,nft_ct
+nf_defrag_ipv6         24576  1 nf_conntrack
+nf_defrag_ipv4         16384  1 nf_conntrack
+ip_set                 65536  0
+rfkill                 40960  1
+nf_tables             344064  243 nft_ct,nft_reject_inet,nft_fib_ipv6,nft_fib_ipv4,nft_chain_nat,nft_reject,nft_fib,nft_fib_inet
+nfnetlink              20480  3 nf_tables,ip_set
+qrtr                   57344  4
+sunrpc                802816  1
+binfmt_misc            28672  1
+vfat                   24576  1
+fat                   106496  1 vfat
+intel_rapl_msr         20480  0
+intel_rapl_common      36864  1 intel_rapl_msr
+intel_uncore_frequency    16384  0
+intel_uncore_frequency_common    16384  1 intel_uncore_frequency
+i10nm_edac             40960  0
+nfit                   86016  1 i10nm_edac
+libnvdimm             241664  1 nfit
+x86_pkg_temp_thermal    20480  0
+intel_powerclamp       16384  0
+coretemp               20480  0
+snd_hda_codec_realtek   192512  1
+snd_hda_codec_generic   114688  1 snd_hda_codec_realtek
+ledtrig_audio          16384  1 snd_hda_codec_generic
+kvm_intel             458752  0
+iTCO_wdt               16384  0
+snd_hda_intel          65536  0
+kvm                  1306624  1 kvm_intel
+kmem                   16384  0
+device_dax             20480  0
+pmt_crashlog           16384  0
+intel_pmc_bxt          16384  1 iTCO_wdt
+snd_intel_dspcfg       36864  1 snd_hda_intel
+pmt_telemetry          16384  0
+iTCO_vendor_support    16384  1 iTCO_wdt
+snd_intel_sdw_acpi     20480  1 snd_intel_dspcfg
+pmt_class              16384  2 pmt_crashlog,pmt_telemetry
+intel_sdsi             16384  0
+irqbypass              16384  1 kvm
+snd_hda_codec         212992  3 snd_hda_codec_generic,snd_hda_intel,snd_hda_codec_realtek
+rapl                   24576  0
+snd_hda_core          135168  4 snd_hda_codec_generic,snd_hda_intel,snd_hda_codec,snd_hda_codec_realtek
+intel_cstate           24576  0
+snd_hwdep              20480  1 snd_hda_codec
+ipmi_ssif              49152  0
+snd_seq               106496  0
+snd_seq_device         16384  1 snd_seq
+snd_pcm               180224  3 snd_hda_intel,snd_hda_codec,snd_hda_core
+intel_uncore          258048  0
+pcspkr                 16384  0
+dax_hmem               20480  0
+mei_me                 61440  0
+snd_timer              53248  2 snd_seq,snd_pcm
+isst_if_mmio           16384  0
+isst_if_mbox_pci       16384  0
+idxd                  135168  0
+snd                   147456  9 snd_hda_codec_generic,snd_seq,snd_seq_device,snd_hwdep,snd_hda_intel,snd_hda_codec,snd_hda_codec_realtek,snd_timer,snd_pcm
+isst_if_common         20480  2 isst_if_mmio,isst_if_mbox_pci
+mei                   192512  1 mei_me
+i2c_i801               40960  0
+idxd_bus               20480  1 idxd
+cxl_mem                16384  0
+intel_vsec             20480  0
+soundcore              16384  1 snd
+i2c_ismt               36864  0
+i2c_smbus              20480  1 i2c_i801
+acpi_ipmi              20480  0
+ipmi_si                94208  1
+ipmi_devintf           20480  0
+ipmi_msghandler        90112  4 ipmi_devintf,ipmi_si,acpi_ipmi,ipmi_ssif
+acpi_power_meter       24576  0
+acpi_pad              184320  0
+pfr_telemetry          20480  0
+pfr_update             20480  0
+zram                   32768  2
+xfs                  2461696  2
+crct10dif_pclmul       16384  1
+crc32_pclmul           16384  0
+crc32c_intel           24576  0
+polyval_clmulni        16384  0
+polyval_generic        16384  1 polyval_clmulni
+ghash_clmulni_intel    16384  0
+sha512_ssse3           49152  0
+nvme                   65536  3
+nvme_core             221184  4 nvme
+igc                   188416  0
+ast                    77824  0
+nvme_common            24576  1 nvme_core
+i2c_algo_bit           20480  1 ast
+wmi                    45056  0
+pinctrl_emmitsburg     24576  0
+ip6_tables             40960  0
+ip_tables              40960  0
+fuse                  208896  1

@@ -13,9 +13,12 @@ function collect_cmds() {
     "dmidecode"
     "free -m"
     "lscpu"
+    "lspci"
     "lsmem"
+    "lsmem -o RANGE,SIZE,STATE,REMOVABLE,ZONES,NODE,BLOCK"
     "lsmem -a -o RANGE,SIZE,STATE,REMOVABLE,ZONES,NODE,BLOCK"
     "lsmod"
+    "numactl -H"
     "mount -v"
   )
 

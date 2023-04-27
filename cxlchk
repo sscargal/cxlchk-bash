@@ -1,0 +1,457 @@
+#!/usr/bin/env bash
+
+# set -e: exits if a command fails
+# set -u: errors if an variable is referenced before being set
+# set -e
+
+#################################################################################################
+# Global Variables 
+#################################################################################################
+
+VERSION="0.1.0"					# version string
+
+SCRIPT_NAME=${0##*/}				# Name of this script
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )"	# Provides the full directory name of the script no matter where it is being called from
+
+DAXCTL=("$(command -v daxctl)")     # Path to daxctl
+CXLCLI=("$(command -v cxl)")			  # Path to cxl, use -c option to specify the location of the cxl binary
+BC=("$(command -v bc)")				      # Path to bc
+NUMACTL=("$(command -v numactl)")		# Path to numactl
+LSCPU=("$(command -v lscpu)")       # Path to lscpu
+AWK=("$(command -v awk)")           # Path to awk
+GREP=("$(command -v grep)")			    # Path to grep
+EGREP=("$(command -v egrep)")			  # Path to egrep
+SED=("$(command -v sed)")			      # Path to sed
+TPUT=("$(command -v tput)")			    # Path to tput
+CP=("$(command -v cp)")				      # Path to cp
+FIND=("$(command -v find)")         # Path to find
+TEE=("$(command -v tee)")           # Path to tee
+TAIL=("$(command -v tail)")         # Path to tail
+
+OUTPUT_PATH="./cxlchk.`hostname`.`date +"%m%d-%H%M"`" # output directory created by this script
+STDOUT_LOG_FILE="cxlchk.log"			# Filename to save STDOUT and STDERR
+TERMCOLORS=false				# Use terminal colors or not (default: FALSE)
+
+# Variables for script input options and arguments
+OPT_VERBOSITY=0					# default, -v, -vv, -vvv option to increase verbose output
+OPT_A=false					# Determine if -A arg was passed in
+OPT_C=false					# Determine if -C arg was passed in
+OPT_m=false					# Determine if -m arg was passed in
+
+ANALYZER_MODULE_LIST=""				# A user defined list of modules to include or exclude during execution
+
+#################################################################################################
+# Helper Functions
+#################################################################################################
+
+# Handle Ctrl-C User Input
+trap ctrl_c INT
+function ctrl_c() {
+  echo "INFO: Received CTRL+C - aborting"
+  display_end_info
+  popd &> /dev/null
+  exit 1
+}
+
+# Validate the Bash version
+function bash_version_check() {
+  if ((BASH_VERSINFO[0] < 4))
+  then
+    echo "Sorry, you need at least bash-4.0 to run this script. Exiting."
+    exit 1
+  fi
+}
+
+# Display test start information
+function display_start_info() {
+  START_TIME=$(date +%s)
+  echo "======================================================================="
+  echo "Starting CXL Checker"
+  echo "${SCRIPT_NAME} Version ${VERSION}"
+  echo "Started: $(date --date @${START_TIME})"
+  echo "======================================================================="
+}
+
+# Display test end information
+function display_end_info() {
+  END_TIME=$(date +%s)
+  TEST_DURATION=$((${END_TIME}-${START_TIME}))
+  echo "======================================================================="
+  echo "CXL Checker Complete"
+  echo "Ended: $(date --date @${END_TIME})"
+  echo "Duration: ${TEST_DURATION} seconds"
+  echo "Results: ${OUTPUT_PATH}"
+  echo "Logfile: ${LOG_FILE}"
+  echo "======================================================================="
+}
+
+# Verify this script is being executed on supported OS and Architectures
+function verify_os(){
+  if [[ $(uname) != "Linux" ]]; then
+    echo "[Error] This script is supported on Linux only. You have $(uname). Exiting."
+    display_end_info
+    popd &> /dev/null
+    exit 1
+  fi
+
+  if [[ $(uname -m) != "x86_64" ]]; then
+    echo "[Error] This script is supported on x86_64 only. You have $(uname -m). Exiting."
+    display_end_info
+    popd &> /dev/null
+    exit 1
+  fi
+}
+
+# Verify the required commands and utilities exist on the system
+# We use either the defaults or user specified paths
+function verify_cmds() {
+  err_state=false
+
+  # daxctl is optional
+  if [ ! -x "${DAXCTL}" ]; then
+    echo "ERROR: daxctl command not found!" 
+    err_state=false
+  else
+    echo "Using DAXCTL command: ${DAXCTL}"
+    TOKENS=( $(${DAXCTL} version 2>&1 ) )
+    DAXCTL_VER=${TOKENS[-1]}
+    echo "DAXCTL version: ${DAXCTL_VER}"
+  fi
+
+  # cxl is optional and only available in NDCTL version 72 or later
+  if [ ! -x "${CXLCLI}" ]; then
+    echo "INFO: cxl command not found! Use -c to specify the location."
+    err_state=false 
+  else
+    echo "Using CXL command: ${CXLCLI}"
+    echo "CXL version: $(${CXLCLI} version)"
+  fi
+
+  for CMD in awk sed numactl lscpu grep egrep mount wc mountpoint cut bc cp find tee; do
+   CMD_PATH=($(command -v ${CMD}))
+   if [ ! -x "${CMD_PATH}" ]; then
+     echo "ERROR: ${CMD} command not found! Please install the ${CMD} package."
+     err_state=true
+   fi
+  done
+
+  if ${err_state}; then
+    echo "Exiting due to previous error(s)"
+    echo "Please resolve missing binaries and re-run this script."
+    exit 1
+  fi
+}
+
+# Display some basic system information
+function sysinfo() {
+  # Get the OS distribution and version if possible
+  if [ -f "/etc/os-release" ]; then
+    OS_PRETTY_NAME=$(${GREP} PRETTY_NAME /etc/os-release | cut -f2 -d'"')
+    echo "Operating System: ${OS_PRETTY_NAME}"
+  fi
+
+  # Kernel version
+  echo "Kernel Version :" `uname -r`
+
+  # CPU Info
+  ${LSCPU} | egrep "^CPU\(s\):|^Model name:|^Socket\(s)\:|^NUMA node"
+}
+
+# Display the help information
+function display_usage() {
+  echo " "
+  echo "Usage: $0 [optional args]"
+  echo " "
+  echo "Checks for known issues with persistent memory configurations." 
+  echo "Run with root privilege." 
+  echo " "
+  echo "Optional args:"
+  echo "   -A <Path to dataset>"
+  echo "      Specify the path to a dataset. Skips running the collector."
+  echo " "
+  echo "   -C" 
+  echo "      Run the collector only. Skips running the analyzer."
+  echo " "
+  echo "   -c <Path to CXL executable>"
+  echo "      Specify the path to the CXL executable"
+  echo " "
+  echo "   -h,-?" 
+  echo "      Display this help"
+  echo " "
+  echo "   -l" 
+  echo "      List Analyzer Modules and Rules"
+  echo " "
+  echo "   -m <module1, module2, ..., moduleN>"
+  echo "      Specify which Analyzer modules to include or exclude"
+  echo " "
+  echo "   -v"
+  echo "      Print verbose output. Use -v, -vv, and -vvv to increase verbosity."
+  exit 0
+}
+
+# Process command arguments and options
+function process_args() {
+
+  # Process the command arguments and options
+  while getopts "h?A:Cc:lm:v" opt; do
+    case "$opt" in
+    A) # Skip running the data collector and analyze a collected dataset (path specified by user)
+      OPT_A=true
+      OUTPUT_PATH=${OPTARG}
+      if [[ ! -d "${OUTPUT_PATH}" ]]; then
+	echo "Error: The directory containing the date does not exist"
+	exit 1
+      fi
+      ;;
+    C) # Run the collector only. Do not run the analyzer 
+      OPT_C=true
+      ;;
+    c) # Set the location of the cxl binary
+      CXLCLI="${OPTARG}"
+      ;;
+    h|\?)
+      display_usage $0
+      ;;
+    l) # List Analyzer Modules and Rules
+      list_analyzer_modules
+      list_analyzer_rules 
+      exit 0
+      ;;
+    m) # User specifies which Analyzer modules to include or exclude
+      OPT_m=true
+      ANALYZER_MODULE_LIST=${OPTARG}
+      ;; 
+    v) # Each -v should increase OPT_VERBOSITY level
+      OPT_VERBOSITY=$(($OPT_VERBOSITY+1))
+      # Source the debug_msg() function
+      . common/debug
+      ;;
+    *) # Invalid argument
+      display_usage ${0}
+      exit 1
+      ;;
+    esac
+  done
+
+  # Sanity Check command arguments
+  # -A and -C are mutually exclusive
+  if [[ "${OPT_A}" = true ]] && [[ "${OPT_C}" = true ]]; then
+    echo "Cannot use '-A' and '-C' together."
+    display_usage $0
+    exit 1
+  fi
+
+  # Sanity check verbosity levels
+  if [ ${OPT_VERBOSITY} -gt 3 ]; then
+    OPT_VERBOSITY=3
+  fi
+}
+
+# Create output directory
+function init_outputs() {
+   rm -rf $OUTPUT_PATH 2> /dev/null
+   mkdir $OUTPUT_PATH
+}
+
+# Define string definitions based on whether colors are or are not supported by the terminal
+function setup_strings() {
+  if [[ "${TERMCOLORS}" = true ]]; then
+    STR_PASSED="${green}[ PASSED   ]${normal}"
+    STR_WARN="${yellow}[ WARNING  ]${normal}"
+    STR_FAIL="${red}[ FAILED   ]${normal}"
+    STR_INFO="${magenta}[ INFO     ]${normal}"
+    STR_DEBUG="${cyan}[ DEBUG    ]${normal}"
+    STR_CRIT="${red}[ CRITICAL ]${normal}"
+    STR_SKIPPED="${blue}[ SKIPPED  ]${normal}"
+    STR_UNKNOWN="${white}[ UNKNOWN  ]${normal}"
+  else
+    STR_PASSED="[ PASSED   ]"
+    STR_WARN="[ WARNING  ]"
+    STR_FAIL="[ FAILED   ]"
+    STR_INFO="[ INFO     ]"
+    STR_DEBUG="[ DEBUG    ]"
+    STR_CRIT="[ CRITICAL ]"
+    STR_SKIPPED="[ SKIPPED  ]"
+    STR_UNKNOWN="[ UNKNOWN  ]"
+  fi
+}
+
+# Auto detect whether the users terminal supports colors
+# Sets TERMCOLORS to TRUE or FALSE
+function auto_detect_terminal_colors() {
+  # Verify STDOUT is a terminal
+  if [ -t 1 ]; then
+    # If the terminal supports colors, use them.
+    # Use the tput command if available. If not, fall back and manually assign colors.
+    if [ -z "${TPUT}" ]; then
+      # tput is not available. Manually assign colors
+      bold="\e[1m"
+      underline="\e[4"
+      normal="\e[0m"
+      black="\e[39m"
+      red="\e[31m"
+      green="\e[32m"
+      yellow="\e[33m"
+      blue="\e[34m"
+      magenta="\e[35m"
+      cyan="\e[36m"
+      white="\e[97m"
+      default_fg="\e[39m"
+      default_bg="\e[49m"
+    else 
+      # Use tput
+      if [[ $(${TPUT} colors) -ge 8 ]]; then
+        # Enable terminal colors
+        TERMCOLORS=true
+        # Define the color scheme using tput
+        bold="$(${TPUT} bold)"
+        underline="$(${TPUT} smul)"
+        standout="$(${TPUT} smso)"
+        normal="$(${TPUT} sgr0)" #reset foreground to default
+        black="$(${TPUT} setaf 0)"
+        red="$(${TPUT} setaf 1)"
+        green="$(${TPUT} setaf 2)"
+        yellow="$(${TPUT} setaf 3)"
+        blue="$(${TPUT} setaf 4)"
+        magenta="$(${TPUT} setaf 5)"
+        cyan="$(${TPUT} setaf 6)"
+        white="$(${TPUT} setaf 7)"
+      fi
+    fi 
+  else
+    # This isn't a terminal. Disable colors.
+    TERMCOLORS=false
+  fi 
+
+  # Call setup_strings to use color or no color
+  setup_strings
+}
+
+# Get a list of Analyzer Modules
+function get_analyser_modules() {
+  ANALYZER_MODULE_LIST="$(${FIND} ./analyzer/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
+}
+
+# List available Analyzer modules
+# Support top-level modules only
+# TODO Add support for submodules 
+function list_analyzer_modules() {
+  get_analyser_modules
+  echo "Analyzer Modules"
+  echo "================"
+  for module in "${ANALYZER_MODULE_LIST[@]}"; do
+    echo "${module}"
+  done
+  echo ""
+}
+
+# Get a list of Analyzer Rules
+function get_analyzer_rules() {
+  ANALYZER_RULE_LIST="$(${FIND} analyzer/ -mindepth 1 ! -name "analyzer" -type f)" 
+}
+
+# List available Analyzer rules
+# TODO: Could improve this output to look like the tree command, or use the tree command if it exists
+function list_analyzer_rules() {
+  get_analyzer_rules
+  echo "Analyzer Rules"
+  echo "=============="
+  for rule in "${ANALYZER_RULE_LIST[@]}"; do
+    # Strip the leading "analyzer/" from the path
+    echo "${rule/analyzer\//}"
+  done
+  echo ""
+}
+
+# Save STDOUT and STDERR to a log file
+# arg1 = path to log file. If empty, save to current directory
+function log_stdout_stderr {
+  local LOG_PATH
+  if [[ $1 != "" ]]; then 
+    # Use the specified path
+    LOG_PATH=${1}
+  else
+    # Use current working directory
+    LOG_PATH=$(pwd)
+  fi
+  LOG_FILE="${LOG_PATH}/${STDOUT_LOG_FILE}"
+  # Capture STDOUT and STDERR to a log file, and display to the terminal
+  if [[ ${TEE} != "" ]]; then
+    # Use the tee approach
+    exec &> >(${TEE} -a "${LOG_FILE}")
+  else
+    # Use the tail approach
+    exec &> "${LOG_FILE}" && ${TAIL} "${LOG_FILE}"
+  fi
+}
+
+# Initialization
+function _init {
+  # Call internal functions
+  sysinfo
+  verify_cmds
+  verify_os
+}
+
+#################################################################################################
+# Main
+#################################################################################################
+
+# Verify the script is executed with root privileges
+if [[ $EUID -ne 0 ]]; then
+  echo "Please run this script with root privilege or use -h to display help information."
+  exit 1
+fi
+
+# Validate Bash version >= 4.0.0
+bash_version_check
+
+# Add the current working directory to $PATH
+pushd $PWD &> /dev/null
+
+#  Process command arguments
+process_args "$@"
+
+# Detect Terminal Type
+auto_detect_terminal_colors
+
+# Source common functions
+. common/common
+
+# If not processing a previously collected dataset, run the data collector on the local machine 
+if [[ "${OPT_A}" = false ]] ; then 
+  init_outputs 		# Initialize the data collection directory
+
+  # Save STDOUT and STDERR logs to the data collection directory
+  log_stdout_stderr "${OUTPUT_PATH}"
+
+  # Display the header information
+  display_start_info
+
+  # Initialize
+  _init
+
+  # Run the collector module
+  . collector/collector 
+else
+  # Save STDOUT and STDERR logs to the current directory
+  log_stdout_stderr "$(pwd)"
+
+  # Display the header information
+  display_start_info
+fi
+
+# Run the analysis modules on the collected data 
+if [[ "${OPT_C}" = false ]] ; then 
+  . analyzer/analyzer
+fi
+
+# Zip the output directory
+# TODO
+
+# Display the end header information
+display_end_info
+
+# Remove the current directory from $PATH 
+popd &> /dev/null
+exit 0

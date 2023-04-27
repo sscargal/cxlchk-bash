@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# set -x
+# Prevent repeated sourcing
+if [ -n "${_MODULE_CHECK_CXL_DEVICES_}" ]; then
+  return
+fi
+_MODULE_CHECK_CXL_DEVICES_="Loaded"
+
+# Find 'CXL' devices in `lspci`
+function cxl_find_devices() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=""    # Used for error reporting
+  local result=""	      # Used to handle the result from the grep command
+
+  # Exit the function with a SKIPPED message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    rule_result SKIPPED "Could not process '${FNAME}'. File not found"
+    return
+  fi
+
+  # Find 'CXL' in the `lspci` output
+  res=$(${GREP} "CXL" ${FNAME})
+  case "$?" in 
+    0)
+      rule_result PASSED "One or more 'CXL' entries found in 'lspci'!"
+      ;;
+    1)
+      rule_result FAILED "No 'CXL' entries found in 'lspci'"
+      ;;
+    *)
+      rule_result SKIPPED "Failed to process 'lspci' looking for 'CXL' entries!"
+      ;;
+  esac
+}
+
+# Call the main function
+cxl_find_devices "${OUTPUT_PATH}/lspci"
+
+set +x
