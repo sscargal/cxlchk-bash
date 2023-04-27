@@ -1,1 +1,0 @@
-BOOT_IMAGE=(hd0,gpt2)/vmlinuz-6.3.0-rc6 root=/dev/mapper/fedora_fedora-root ro rd.lvm.lv=fedora_fedora/root memhp_default_state=offline rhgb quiet
