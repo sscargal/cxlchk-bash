@@ -56,29 +56,17 @@ $ sudo ./cxlchk -A ./cxlchk.hostname.0113-1210
 List the available Analyzer Modules and Rules
 ```
 $ sudo ./cxlchk -l
-=======================================================================
-Starting PMem Checker
-cxlchk Version 0.1.0
-Started: Tue Feb 15 03:56:52 PM MST 2022
-=======================================================================
 Analyzer Modules
 ================
 linux
-optane
+cxl
 
 Analyzer Rules
 ==============
-linux/parse_messages
-analyzer/optane/check_region_persistentmemorytype
-analyzer/optane/check_region_freecapacity
-analyzer/optane/check_dimm_lockstate
-analyzer/optane/check_dimm_firmware_version
-analyzer/optane/check_dimm_health_status
-analyzer/optane/check_dimm_arsstatus
-analyzer/optane/check_percentage_remaining
-analyzer/optane/check_dimm_population
-analyzer/optane/check_region_capacity
-analyzer/optane/check_region_health
+linux/full_file_system
+analyzer/linux/memmap
+analyzer/cxl/find_devices
+analyzer/cxl/offline_mem_blocks
 [...snip...]
 ```
 
@@ -87,65 +75,62 @@ The example output below shows what to expect when running the data collector an
 ```
 $ sudo ./cxlchk
 =======================================================================
-Starting PMem Checker
+Starting CXL Checker
 cxlchk Version 0.1.0
-Started: Fri Jan 14 05:44:47 PM MST 2022
+Started: Thu Apr 27 08:37:29 AM PDT 2023
 =======================================================================
-Using NDCTL command: /usr/local/bin/ndctl
-NDCTL version: 72
-Using IPMCTL command: /usr/local/bin/ipmctl
-IPMCTL version: 02.00.00.3871
-Using CXL command: /usr/local/bin/cxl
-CXL version: 72
-Operating System: Fedora Linux 35 (Server Edition)
-Kernel Version : 5.15.10-200.fc35.x86_64
-CPU(s):                          96
-Model name:                      Intel(R) Xeon(R) Platinum 8260L CPU @ 2.40GHz
+Operating System: Fedora Linux 36 (Server Edition)
+Kernel Version : 6.3.0-rc6
+CPU(s):                          208
+Model name:                      Intel(R) Xeon(R) Platinum 8470 CPU @2.00GHz
 Socket(s):                       2
-NUMA node(s):                    2
-NUMA node0 CPU(s):               0-23,48-71
-NUMA node1 CPU(s):               24-47,72-95
+NUMA node(s):                    3
+NUMA node0 CPU(s):               0-51,104-155
+NUMA node1 CPU(s):               52-103,156-207
+NUMA node2 CPU(s):               
+Using DAXCTL command: /usr/bin/daxctl
+DAXCTL version: 76.1
+Using CXL command: /usr/bin/cxl
+CXL version: 76.1
 =======================================================================
 Starting data collector
 =======================================================================
-Running IPMCTL Collector
-................................
-Running NDCTL Collector
-........
-Running CXL Collector
-...
-Collecting files
-.
 Collecting command outputs
-..
+100% (13 of 13)  [====================] 
+Collecting files
+100% (5 of 5)  [====================] 
+Running CXL Collector
+100% (3 of 3)  [====================] 
+Running DAXCTL Collector
+100% (5 of 5)  [====================] 
 =======================================================================
 Data collector completed
 =======================================================================
 =======================================================================
 Starting analysis of the data
 =======================================================================
-[ PASSED  ] optane_check_region_freecapacity : All Regions have the same FreeCapacity
-[ PASSED  ] optane_check_dimm_lockstate : All PMem Module Security LockState is good
-[ PASSED  ] optane_check_dimm_firmware_version : All PMem Modules have the same firmware.
-[ PASSED  ] optane_check_dimm_health_status : All PMem Modules are Healthy
-[ PASSED  ] optane_check_dimm_population : Detected 12 PMem modules. Population looks good.
-[ PASSED  ] optane_check_region_capacity : All Regions have the same Capacity
-[ PASSED  ] optane_check_region_health : All Regions are Healthy
-[ PASSED  ] optane_check_dimm_capacity : All PMem Modules have the same capacity.
+[ PASSED   ] linux_check_full_file_systems : All file systems are <75% full.
+[ PASSED   ] linux_check_memmap : No 'memmap' entries found in the Linux boot command line (/proc/cmdline)
+[ PASSED   ] cxl_find_devices : One or more 'CXL' entries found in 'lspci'!
+[ PASSED   ] cxl_find_devices : All memory blocks were ONLINE
 =======================================================================
 Data analysis completed
 =======================================================================
 =======================================================================
 Analysis Report Summary
 =======================================================================
-[ PASSED  ] = 8
-[ FAILED  ] = 0
-[ INFO    ] = 0
-[ WARNING ] = 0
+[ PASSED   ] = 4
+[ FAILED   ] = 0
+[ SKIPPED  ] = 0
+[ INFO     ] = 0
+[ WARNING  ] = 0
+[ CRITICAL ] = 0
+[ UNKNOWN  ] = 0
 =======================================================================
-PMem Checker Complete
-Ended: Fri Jan 14 05:45:42 PM MST 2022
-Duration: 55 seconds
-Results: ./cxlchk.hostname.0114-1744
+CXL Checker Complete
+Ended: Thu Apr 27 08:37:30 AM PDT 2023
+Duration: 1 seconds
+Results: ./cxlchk.sr0.0427-0837
+Logfile: ./cxlchk.sr0.0427-0837/cxlchk.log
 =======================================================================
 ```
