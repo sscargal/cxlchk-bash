@@ -6,7 +6,7 @@ if [ -n "${_MODULE_CHECK_OFFLINE_MEM_BLKS_}" ]; then
 fi
 _MODULE_CHECK_OFFLINE_MEM_BLKS_="Loaded"
 
-# Find 'CXL' devices in `lspci`
+# Find OFFLINE memory blocks
 function cxl_offline_mem_blocks() {
   local FNAME=$1        # File name to process
   local ERR_STATE=""    # Used for error reporting
@@ -34,6 +34,6 @@ function cxl_offline_mem_blocks() {
 }
 
 # Call the main function
-cxl_find_devices "${OUTPUT_PATH}/lsmem_-a_-o_RANGE,SIZE,STATE,REMOVABLE,ZONES,NODE,BLOCK"
+cxl_offline_mem_blocks "${OUTPUT_PATH}/lsmem_-a_-o_RANGE,SIZE,STATE,REMOVABLE,ZONES,NODE,BLOCK"
 
 set +x
