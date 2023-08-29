@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# set -x
+# Prevent repeated sourcing
+if [ -n "${_MODULE_CHECK_EFI_NOSOFTRESERVE_}" ]; then
+  return
+fi
+_MODULE_CHECK_EFI_NOSOFTRESERVE_="Loaded"
+
+# Find 'efi=nosoftreserve' devices in the Kernel boot `cmdline`
+function efi_nosoftreserve() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=""    # Used for error reporting
+  local result=""	      # Used to handle the result from the grep command
+
+  # Exit the function with a SKIPPED message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    rule_result SKIPPED "Could not process '${FNAME}'. File not found"
+    return
+  fi
+
+  # Find 'efi=nosoftreserve' devices in the Kernel boot `cmdline`
+  res=$(${GREP} "efi=nosoftreserve" ${FNAME})
+  case "$?" in 
+    0)
+      rule_result FAILED "Found an 'efi=nosoftreserve' entry in 'cmdline'! Any BIOS Special Purpose Memory options will be ignored by the Kernel. CXL will not be configured correctly by the Kernel as a DEVDAX device!"
+      ;;
+    1)
+      rule_result PASSED "No 'efi=nosoftreserve' entries found in 'cmdline'"
+      ;;
+    *)
+      rule_result SKIPPED "Failed to process 'cmdline'. Error: $?"
+      ;;
+  esac
+}
+
+# Call the main function
+efi_nosoftreserve "${OUTPUT_PATH}/cmdline"
+
+set +x
