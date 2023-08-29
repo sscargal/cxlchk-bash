@@ -33,7 +33,7 @@ STDOUT_LOG_FILE="cxlchk.log"			# Filename to save STDOUT and STDERR
 TERMCOLORS=false				# Use terminal colors or not (default: FALSE)
 
 # Variables for script input options and arguments
-OPT_VERBOSITY=0					# default, -v, -vv, -vvv option to increase verbose output
+OPT_VERBOSITY=0			# default, -v, -vv, -vvv option to increase verbose output
 OPT_A=false					# Determine if -A arg was passed in
 OPT_C=false					# Determine if -C arg was passed in
 OPT_m=false					# Determine if -m arg was passed in
@@ -162,7 +162,8 @@ function display_usage() {
   echo " "
   echo "Usage: $0 [optional args]"
   echo " "
-  echo "Checks for known issues with persistent memory configurations." 
+  echo "Checks for known issues with Compute Express Link (CXL) configurations." 
+  echo "By default, cxlchk runs the collector and analyzer modules."
   echo "Run with root privilege." 
   echo " "
   echo "Optional args:"
@@ -181,11 +182,26 @@ function display_usage() {
   echo "   -l" 
   echo "      List Analyzer Modules and Rules"
   echo " "
-  echo "   -m <module1, module2, ..., moduleN>"
-  echo "      Specify which Analyzer modules to include or exclude"
-  echo " "
+  # echo "   -m <module1, module2, ..., moduleN>"
+  # echo "      Specify which Analyzer modules to include or exclude"
+  # echo " "
   echo "   -v"
   echo "      Print verbose output. Use -v, -vv, and -vvv to increase verbosity."
+  echo " "
+  echo "EXAMPLES:"
+  echo " "
+  echo "  Example 1: Run the collector and analyzer modules. This is the default"
+  echo " "
+  echo "    $ sudo ./cxlchk"
+  echo " "
+  echo " Example 2: Collect data from the host, but do not analyze it"
+  echo " "
+  echo "    $ sudo ./cxlchk -C"
+  echo " "
+  echo " Example 3: Run the analyzer on a previously collected dataset. Useful for offline analysis."
+  echo " "
+  echo "    # sudo ./cxlchk -A cxlchk.localhost.0829-1451"
+  echo " "
   exit 0
 }
 
@@ -397,12 +413,6 @@ function _init {
 # Main
 #################################################################################################
 
-# Verify the script is executed with root privileges
-if [[ $EUID -ne 0 ]]; then
-  echo "Please run this script with root privilege or use -h to display help information."
-  exit 1
-fi
-
 # Validate Bash version >= 4.0.0
 bash_version_check
 
@@ -418,8 +428,15 @@ auto_detect_terminal_colors
 # Source common functions
 . common/common
 
-# If not processing a previously collected dataset, run the data collector on the local machine 
+# If not processing a previously collected dataset (-A), run the data collector on the local machine
+# The collector must be executed with root priviledges
 if [[ "${OPT_A}" = false ]] ; then 
+  # Verify the script is executed with root privileges
+  if [[ $EUID -ne 0 ]]; then
+    echo "Please run this script with root privilege. Use -h to display help information."
+    exit 1
+  fi
+
   init_outputs 		# Initialize the data collection directory
 
   # Save STDOUT and STDERR logs to the data collection directory
