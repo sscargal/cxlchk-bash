@@ -9,29 +9,27 @@
 
 ```
 Usage: ./cxlchk [optional args]
-
-Checks for known issues with persistent memory configurations.
+ 
+Checks for known issues with Compute Express Link (CXL) configurations.
+By default, cxlchk runs the collector and analyzer modules.
 Run with root privilege.
-
+ 
 Optional args:
    -A <Path to dataset>
       Specify the path to a dataset. Skips running the collector.
-
+ 
    -C
       Run the collector only. Skips running the analyzer.
-
+ 
    -c <Path to CXL executable>
       Specify the path to the CXL executable
-
+ 
    -h,-?
       Display this help
-
+ 
    -l
       List Analyzer Modules and Rules
-
-   -m <module1, module2, ..., moduleN>
-      Specify which Analyzer modules to include or exclude
-
+ 
    -v
       Print verbose output. Use -v, -vv, and -vvv to increase verbosity.
 ```
