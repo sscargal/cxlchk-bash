@@ -14,8 +14,10 @@ function cxl_collector() {
   IFS="" #Change the delimiter to prevent Bash separating elements by spaces
   cxl_args=(
     "version"
+    "list"
     "list --memdevs --health"
     "list --memdevs --health --idle"
+    "-vvv"
   )
 
   # Initialize the progress bar

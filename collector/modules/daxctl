@@ -14,6 +14,7 @@ function daxctl_collector() {
   IFS="" #Change the delimiter to prevent Bash separating elements by spaces
   daxctl_args=(
     "version"
+    "list"
     "list --devices"
     "list --idle"
     "list --regions"
