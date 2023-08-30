@@ -7,7 +7,7 @@ fi
 _MODULE_CHECK_EFI_NOSOFTRESERVE_="Loaded"
 
 # Find 'efi=nosoftreserve' devices in the Kernel boot `cmdline`
-function efi_nosoftreserve() {
+function linux_efi_nosoftreserve() {
   local FNAME=$1        # File name to process
   local ERR_STATE=""    # Used for error reporting
   local result=""	      # Used to handle the result from the grep command
@@ -34,6 +34,6 @@ function efi_nosoftreserve() {
 }
 
 # Call the main function
-efi_nosoftreserve "${OUTPUT_PATH}/cmdline"
+linux_efi_nosoftreserve "${OUTPUT_PATH}/cmdline"
 
 set +x

@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# set -x
+# Prevent repeated sourcing
+if [ -n "${_MODULE_CHECK_MOVABLE_MEM_ZONES_}" ]; then
+  return
+fi
+_MODULE_CHECK_MOVABLE_MEM_ZONES_="Loaded"
+
+# Find Movable memory blocks
+function cxl_movable_mem_zones() {
+  local FNAME=$1        # File name to process
+  local ERR_STATE=""    # Used for error reporting
+  local result=""	      # Used to handle the result from the grep command
+
+  # Exit the function with a SKIPPED message if the file to process doesn't exist
+  if [[ ! -f ${FNAME} ]] ; then
+    rule_result SKIPPED "Could not process '${FNAME}'. File not found"
+    return
+  fi
+
+  # Find 'Movable' in the `lsmem` extended output
+  res=$(${GREP} -Ei "^[0-9].*Movable*" ${FNAME})
+  case "$?" in 
+    0)
+      rule_result PASSED "One or more 'Movable' memory Zones was found."
+      ;;
+    1)
+      rule_result FAILED "No 'Movable' memory zones were found. DRAM and CXL will be treated equally, which is likely not desired."
+      ;;
+    *)
+      rule_result SKIPPED "Failed to process 'lsmem_-a_-o_RANGE,SIZE,STATE,REMOVABLE,ZONES,NODE,BLOCK' looking for 'Movable' memory zones!"
+      ;;
+  esac
+}
+
+# Call the main function
+cxl_movable_mem_zones "${OUTPUT_PATH}/lsmem_-o_RANGE,SIZE,STATE,REMOVABLE,ZONES,NODE,BLOCK"
+
+set +x
